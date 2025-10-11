@@ -29,7 +29,7 @@
              ██████████████████████████████████████████████████████████████       
 ```
 
-# Saxon Scout (Official)
+# Saxon Scout
 
 Saxon Scout is a modern scouting system for the FIRST Robotics Competition (FRC) 2025 REEFSCAPE season. The project provides tools for collecting, analyzing, and exporting match and pit scouting data. It is intended for teams that require a lightweight, local-first web application for competition use.
 
