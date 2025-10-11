@@ -192,5 +192,5 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## Acknowledgements
 
-Created by Team 611 Saxon Robotics for the FRC 2025 REEFSCAPE season.
+Created by Team 611 Saxon Robotics for the FRC 2026 season.
 
