@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useState } from 'inferno-hooks';
+import * as Inferno from 'inferno';
+import { useState } from '../lib/inferno-hooks-shim';
 import type { DirHandle } from '../lib/fsStore';
 import { writeJSON } from '../lib/fsStore';
 
@@ -74,56 +75,56 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
   }
 
   return (
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">Pit Scout</h5>
-        <div class="mb-3">
-          <label class="form-label">Team Number</label>
-          <input type="number" class="form-control" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Pit Scout</h5>
+        <div className="mb-3">
+          <label className="form-label">Team Number</label>
+          <input type="number" className="form-control" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
         </div>
-        <div class="mb-3">
-          <label class="form-label">Drivetrain</label>
-          <select class="form-select" value={drivetrain} onChange={(e: any) => setDrivetrain(e.target.value)}>
-            {driveOptions.map(opt => <option value={opt}>{opt}</option>)}
+        <div className="mb-3">
+          <label className="form-label">Drivetrain</label>
+          <select className="form-select" value={drivetrain} onChange={(e: any) => setDrivetrain(e.target.value)}>
+            {driveOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           </select>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Auto Paths</label>
-          <div class="d-flex flex-wrap gap-2">
+        <div className="mb-3">
+          <label className="form-label">Auto Paths</label>
+          <div className="d-flex flex-wrap gap-2">
             {autoOptions.map(opt => (
-              <label class="form-check">
-                <input type="checkbox" class="form-check-input" checked={autoPaths.includes(opt)} onChange={() => toggleArray(opt, autoPaths, setAutoPaths)} />
+              <label key={opt} className="form-check">
+                <input type="checkbox" className="form-check-input" checked={autoPaths.includes(opt)} onChange={() => toggleArray(opt, autoPaths, setAutoPaths)} />
                 {opt}
               </label>
             ))}
           </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Preferred Zones</label>
-          <div class="d-flex flex-wrap gap-2">
+        <div className="mb-3">
+          <label className="form-label">Preferred Zones</label>
+          <div className="d-flex flex-wrap gap-2">
             {zoneOptions.map(opt => (
-              <label class="form-check">
-                <input type="checkbox" class="form-check-input" checked={zones.includes(opt)} onChange={() => toggleArray(opt, zones, setZones)} />
+              <label key={opt} className="form-check">
+                <input type="checkbox" className="form-check-input" checked={zones.includes(opt)} onChange={() => toggleArray(opt, zones, setZones)} />
                 {opt}
               </label>
             ))}
           </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Cycle Time Estimate (s)</label>
-          <input type="number" class="form-control" value={cycleTime ?? ''} onInput={(e: any) => setCycleTime(e.target.value ? parseInt(e.target.value) : null)} />
+        <div className="mb-3">
+          <label className="form-label">Cycle Time Estimate (s)</label>
+          <input type="number" className="form-control" value={cycleTime ?? ''} onInput={(e: any) => setCycleTime(e.target.value ? parseInt(e.target.value) : null)} />
         </div>
-        <div class="mb-3 form-check">
-          <input type="checkbox" class="form-check-input" id="climbCheck" checked={canClimb} onChange={(e: any) => setCanClimb(e.target.checked)} />
-          <label class="form-check-label" for="climbCheck">Can Climb</label>
+        <div className="mb-3 form-check">
+          <input type="checkbox" className="form-check-input" id="climbCheck" checked={canClimb} onChange={(e: any) => setCanClimb(e.target.checked)} />
+          <label className="form-check-label" for="climbCheck">Can Climb</label>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Notes</label>
-          <textarea class="form-control" rows={3} value={notes} onInput={(e: any) => setNotes(e.target.value)}></textarea>
+        <div className="mb-3">
+          <label className="form-label">Notes</label>
+          <textarea className="form-control" rows={3} value={notes} onInput={(e: any) => setNotes(e.target.value)}></textarea>
         </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-success" onClick={save}>Save Pit Data</button>
-          <button class="btn btn-secondary" onClick={navigateHome}>Back</button>
+        <div className="d-flex gap-2">
+          <button className="btn btn-success" onClick={save}>Save Pit Data</button>
+          <button className="btn btn-secondary" onClick={navigateHome}>Back</button>
         </div>
       </div>
     </div>

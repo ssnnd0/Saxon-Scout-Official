@@ -1,4 +1,5 @@
 // @ts-nocheck
+import * as Inferno from 'inferno';
 import { FC } from 'inferno';
 
 interface HomeProps {
@@ -11,12 +12,12 @@ interface HomeProps {
  */
 const Home: FC<HomeProps> = ({ navigate }) => {
   return (
-    <div class="d-grid gap-3">
-      <button class="btn btn-primary btn-lg" onClick={() => navigate('quick')}>Quick Scout</button>
-      <button class="btn btn-info btn-lg" onClick={() => navigate('pit')}>Pit Scout</button>
-      <button class="btn btn-success btn-lg" onClick={() => navigate('info')}>View Info</button>
-      <button class="btn btn-warning btn-lg" onClick={() => navigate('export')}>Export</button>
-      <button class="btn btn-secondary btn-lg" onClick={() => navigate('settings')}>Settings</button>
+    <div className="d-grid gap-3">
+      <button className="btn btn-primary btn-lg" onClick={() => navigate('quick')}>Quick Scout</button>
+      <button className="btn btn-info btn-lg" onClick={() => navigate('pit')}>Pit Scout</button>
+      <button className="btn btn-success btn-lg" onClick={() => navigate('info')}>View Info</button>
+      <button className="btn btn-warning btn-lg" onClick={() => navigate('export')}>Export</button>
+      <button className="btn btn-secondary btn-lg" onClick={() => navigate('settings')}>Settings</button>
     </div>
   );
 };

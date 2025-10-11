@@ -37,9 +37,13 @@ app.post('/api/login', async (req, res) => {
       'insert into logins(user_id, session_id, user_agent) values ($1, $2, $3)',
       [userId, sessionId, req.headers['user-agent'] || null]
     );
-    // Set cookies to identify session and scouter name
-    res.cookie('sessionId', sessionId, { httpOnly: true, sameSite: 'lax', secure: true });
-    res.cookie('scouterName', trimmed, { sameSite: 'lax', secure: true });
+  // Set cookies to identify session and scouter name. Only mark `secure`
+  // when running in production (HTTPS) so local development over HTTP
+  // continues to receive cookies.
+  const cookieOptions = { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' };
+  res.cookie('sessionId', sessionId, cookieOptions);
+  // scouter name cookie is readable by client so omit httpOnly
+  res.cookie('scouterName', trimmed, { sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
     return res.json({ ok: true, userId });
   } catch (err: any) {
     console.error(err);

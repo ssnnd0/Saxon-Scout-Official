@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useState, useEffect } from 'inferno-hooks';
+import * as Inferno from 'inferno';
+import { useState, useEffect } from '../lib/inferno-hooks-shim';
 import type { DirHandle } from '../lib/fsStore';
 import { writeJSON } from '../lib/fsStore';
 import gamepieceUrl from '../assets/gamepiece.png';
@@ -284,34 +285,34 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
   }
 
   return (
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+    <div className="card shadow-sm">
+      <div className="card-body">
+        <div className="d-flex flex-wrap gap-2 mb-3 align-items-center">
           {/* Phase toggle */}
-          <span class="badge bg-secondary" role="button" onClick={() => setAuto(a => !a)}>{auto ? 'AUTO' : 'TELEOP'}</span>
+          <span className="badge bg-secondary" role="button" onClick={() => setAuto(a => !a)}>{auto ? 'AUTO' : 'TELEOP'}</span>
           {/* Alliance selector */}
-          <div class="btn-group">
-            <button class={`btn btn-${alliance === 'red' ? 'danger' : 'outline-danger'}`} onClick={() => setAlliance('red')}>Red</button>
-            <button class={`btn btn-${alliance === 'blue' ? 'primary' : 'outline-primary'}`} onClick={() => setAlliance('blue')}>Blue</button>
+          <div className="btn-group">
+            <button className={`btn btn-${alliance === 'red' ? 'danger' : 'outline-danger'}`} onClick={() => setAlliance('red')}>Red</button>
+            <button className={`btn btn-${alliance === 'blue' ? 'primary' : 'outline-primary'}`} onClick={() => setAlliance('blue')}>Blue</button>
           </div>
           {/* Mobility toggle; only active during AUTO */}
-          <button class={`btn ${stats.auto.mobility ? 'btn-success' : 'btn-outline-secondary'}`} disabled={!auto} onClick={toggleMobility}>Mobility</button>
+          <button className={`btn ${stats.auto.mobility ? 'btn-success' : 'btn-outline-secondary'}`} disabled={!auto} onClick={toggleMobility}>Mobility</button>
           {/* Timer display; click to start/stop */}
-          <span class="badge bg-dark" role="button" onClick={() => setTimerActive(a => !a)} title="Tap to start/stop timer">⏱ {formatTime(elapsed)}</span>
+          <span className="badge bg-dark" role="button" onClick={() => setTimerActive(a => !a)} title="Tap to start/stop timer">⏱ {formatTime(elapsed)}</span>
           {/* Team and match inputs */}
-          <input class="form-control w-auto" type="number" placeholder="Team" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
-          <input class="form-control w-auto" type="number" placeholder="Match" value={game || ''} onInput={(e: any) => setGame(parseInt(e.target.value || '0'))} />
+          <input className="form-control w-auto" type="number" placeholder="Team" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
+          <input className="form-control w-auto" type="number" placeholder="Match" value={game || ''} onInput={(e: any) => setGame(parseInt(e.target.value || '0'))} />
           {/* Save button */}
-          <button class="btn btn-success ms-auto" onClick={save}>Save Match</button>
+          <button className="btn btn-success ms-auto" onClick={save}>Save Match</button>
         </div>
         {/* Render the grid of buttons */}
-        <div class="row g-2">
+        <div className="row g-2">
           {Array.from({ length: GRID.rows }).map((_, r) => (
-            <div class="col-12 d-flex gap-2" style={{ height: '7rem' }}>
+            <div className="col-12 d-flex gap-2" style={{ height: '7rem' }}>
               {Array.from({ length: GRID.cols }).map((_, c) => (
                 <button
                   key={`${r}-${c}`}
-                  class="flex-fill btn border"
+                  className="flex-fill btn border"
                   style={sliceStyle(r, c)}
                   onClick={() => clickCell(r, c)}
                 >
@@ -322,7 +323,7 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
           ))}
         </div>
         {/* Display summary stats */}
-        <div class="mt-3 small text-muted">
+        <div className="mt-3 small text-muted">
           Auto: {stats.auto.coral.L1 + stats.auto.coral.L2 + stats.auto.coral.L3 + stats.auto.coral.L4 + stats.auto.algae.processor + stats.auto.algae.net} scored
           {stats.auto.mobility ? ' + Mobility' : ''} • Teleop: {stats.teleop.coral.L1 + stats.teleop.coral.L2 + stats.teleop.coral.L3 + stats.teleop.coral.L4 + stats.teleop.algae.processor + stats.teleop.algae.net} scored
           • Fouls: {stats.fouls} • Endgame: {stats.endgame.state}

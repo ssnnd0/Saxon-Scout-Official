@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useEffect, useState, useRef } from 'inferno-hooks';
+import * as Inferno from 'inferno';
+import { useEffect, useState, useRef } from '../lib/inferno-hooks-shim';
 import Chart from 'chart.js/auto';
 import type { DirHandle } from '../lib/fsStore';
 
@@ -174,15 +175,15 @@ export default function InfoViewer({ root }: { root: DirHandle | null }) {
   }
 
   return (
-    <div class="card">
-      <div class="card-body">
+    <div className="card">
+      <div className="card-body">
         <h5>Information Viewer</h5>
-        {error && <div class="alert alert-danger">{error}</div>}
-        {!summary.length && !error && <p class="text-muted">No matches yet.</p>}
+        {error && <div className="alert alert-danger">{error}</div>}
+        {!summary.length && !error && <p className="text-muted">No matches yet.</p>}
         {summary.length > 0 && (
           <>
-            <div class="table-responsive mb-4">
-              <table class="table table-sm">
+            <div className="table-responsive mb-4">
+              <table className="table table-sm">
                 <thead>
                   <tr>
                     <th>Team</th>
@@ -215,10 +216,10 @@ export default function InfoViewer({ root }: { root: DirHandle | null }) {
             <canvas ref={chartRef} style={{ maxWidth: '100%', maxHeight: '300px' }} />
           </>
         )}
-        <button class="btn btn-outline-primary" onClick={askGenAI} disabled={genaiText.length > 0}>
+        <button className="btn btn-outline-primary" onClick={askGenAI} disabled={genaiText.length > 0}>
           Ask GenAI (optional)
         </button>
-        {genaiText && <div class="mt-3"><strong>GenAI:</strong> {genaiText}</div>}
+        {genaiText && <div className="mt-3"><strong>GenAI:</strong> {genaiText}</div>}
       </div>
     </div>
   );

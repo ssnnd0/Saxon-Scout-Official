@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useState } from 'inferno-hooks';
+import * as Inferno from 'inferno';
+import { useState } from '../lib/inferno-hooks-shim';
 import type { DirHandle } from '../lib/fsStore';
 import JSZip from 'jszip';
 
@@ -116,16 +117,16 @@ export default function Export({ root, navigateHome }: ExportProps) {
   }
 
   return (
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">Export Data</h5>
-        {error && <div class="alert alert-danger">{error}</div>}
-        <div class="mb-3 d-grid gap-2">
-          <button class="btn btn-primary" onClick={exportMatches}>Export Matches (ZIP)</button>
-          {matchUrl && <a class="btn btn-outline-primary" href={matchUrl} download="matches_export.zip">Download Matches ZIP</a>}
-          <button class="btn btn-success" onClick={exportPit}>Export Pit Data (ZIP)</button>
-          {pitUrl && <a class="btn btn-outline-success" href={pitUrl} download="pit_export.zip">Download Pit ZIP</a>}
-          <button class="btn btn-secondary" onClick={navigateHome}>Back</button>
+    <div className="card">
+      <div className="card-body">
+        <h5 className="card-title">Export Data</h5>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <div className="mb-3 d-grid gap-2">
+          <button className="btn btn-primary" onClick={exportMatches}>Export Matches (ZIP)</button>
+          {matchUrl && <a className="btn btn-outline-primary" href={matchUrl} download="matches_export.zip">Download Matches ZIP</a>}
+          <button className="btn btn-success" onClick={exportPit}>Export Pit Data (ZIP)</button>
+          {pitUrl && <a className="btn btn-outline-success" href={pitUrl} download="pit_export.zip">Download Pit ZIP</a>}
+          <button className="btn btn-secondary" onClick={navigateHome}>Back</button>
         </div>
       </div>
     </div>

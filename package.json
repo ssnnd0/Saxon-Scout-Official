@@ -7,8 +7,15 @@
     "@fortawesome/free-solid-svg-icons": "6.7.2",
     "@types/prismjs": "1.26.5",
     "autoprefixer": "10.4.21",
+    "bootstrap": "5.3.3",
+    "chart.js": "4.4.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
     "http-server": "14.1.1",
     "image-size": "2.0.2",
+    "inferno": "7.4.11",
+    "jszip": "^3.10.1",
+    "pg": "8.11.1",
     "postcss": "8.5.6",
     "pptxgenjs": "4.0.0",
     "prismjs": "1.30.0",
@@ -16,12 +23,16 @@
     "tailwindcss": "4.1.10",
     "ts-node": "10.9.2",
     "typescript": "5.8.3"
-    ,"inferno": "7.4.11"
-    ,"inferno-hooks": "7.4.11"
-    ,"bootstrap": "5.3.3"
-    ,"express": "4.18.2"
-    ,"cookie-parser": "1.4.6"
-    ,"pg": "8.11.1"
-    ,"chart.js": "4.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.19.4"
+  },
+  "scripts": {
+    "build:server": "tsc -p server/tsconfig.json",
+    "build:app": "node scripts/build-app.js",
+    "build": "npm run build:server && npm run build:app",
+    "start": "node dist/server/server.js",
+    "serve-app": "http-server dist/app -p 8080",
+    "dev": "ts-node server/src/server.ts"
   }
 }

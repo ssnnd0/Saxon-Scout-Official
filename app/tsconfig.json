@@ -3,12 +3,16 @@
     "target": "es2020",
     "module": "esnext",
     "jsx": "preserve",
+    "jsxFactory": "Inferno.createVNode",
+    "jsxFragmentFactory": "Inferno.createFragment",
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "allowJs": true,
     "baseUrl": "./",
     "paths": {
       "*": ["node_modules/*"]
