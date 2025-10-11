@@ -177,49 +177,121 @@ export default function InfoViewer({ root }: { root: DirHandle | null }) {
   return (
     <div className="card-modern card">
       <div className="card-body">
-        <h5>Information Viewer</h5>
-        {error && <div className="alert alert-danger" role="alert">{error}</div>}
-        {!summary.length && !error && <p className="text-muted">No matches yet.</p>}
+        <div className="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h4 className="mb-1 fw-bold">Information Viewer</h4>
+            <p className="text-muted mb-0 small">Team statistics and match insights</p>
+          </div>
+          {summary.length > 0 && (
+            <span className="badge bg-primary" style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}>
+              <i className="fa fa-users me-2"></i>
+              {summary.length} Teams
+            </span>
+          )}
+        </div>
+
+        {error && (
+          <div className="alert alert-danger d-flex align-items-center gap-2" role="alert">
+            <i className="fa fa-exclamation-circle"></i>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {!summary.length && !error && (
+          <div className="text-center py-5">
+            <i className="fa fa-inbox fa-3x text-muted mb-3"></i>
+            <p className="text-muted">No match data available yet. Start scouting to see insights here.</p>
+          </div>
+        )}
+
         {summary.length > 0 && (
           <>
-            <div className="table-responsive mb-4">
-              <table className="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Team</th>
-                    <th>Matches</th>
-                    <th>Auto Score</th>
-                    <th>Teleop Score</th>
-                    <th>Mobility</th>
-                    <th>Endgame (None/Park/Shallow/Deep)</th>
-                    <th>Fouls</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.map(entry => (
-                    <tr key={entry.team}>
-                      <td>{entry.team}</td>
-                      <td>{entry.matches}</td>
-                      <td>{entry.autoScore}</td>
-                      <td>{entry.teleopScore}</td>
-                      <td>{entry.mobilityCount}</td>
-                      <td>
-                        {entry.endgameCounts.none}/{entry.endgameCounts.park}/
-                        {entry.endgameCounts.shallow}/{entry.endgameCounts.deep}
-                      </td>
-                      <td>{entry.foulCount}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="mb-4">
+              <h6 className="fw-semibold mb-3">
+                <i className="fa fa-chart-line me-2 text-primary"></i>
+                Performance Overview
+              </h6>
+              <div className="chart-container mb-4" style={{ position: 'relative', height: '300px' }}>
+                <canvas aria-label="team stats chart" ref={chartRef} />
+              </div>
             </div>
-            <canvas aria-label="team stats chart" ref={chartRef} style={{ maxWidth: '100%', maxHeight: '300px' }} />
+
+            <div className="mb-4">
+              <h6 className="fw-semibold mb-3">
+                <i className="fa fa-table me-2 text-success"></i>
+                Team Statistics
+              </h6>
+              <div className="table-responsive">
+                <table className="table table-hover table-striped">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="fw-bold">Team</th>
+                      <th className="fw-bold">Matches</th>
+                      <th className="fw-bold">Auto Score</th>
+                      <th className="fw-bold">Teleop Score</th>
+                      <th className="fw-bold">Mobility</th>
+                      <th className="fw-bold">Endgame</th>
+                      <th className="fw-bold">Fouls</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map(entry => (
+                      <tr key={entry.team}>
+                        <td className="fw-semibold">{entry.team}</td>
+                        <td>
+                          <span className="badge bg-secondary">{entry.matches}</span>
+                        </td>
+                        <td>
+                          <span className="badge bg-primary">{entry.autoScore}</span>
+                        </td>
+                        <td>
+                          <span className="badge bg-success">{entry.teleopScore}</span>
+                        </td>
+                        <td>
+                          <span className="badge bg-info">{entry.mobilityCount}</span>
+                        </td>
+                        <td className="small">
+                          <span className="text-muted">N:</span>{entry.endgameCounts.none}
+                          <span className="text-muted ms-2">P:</span>{entry.endgameCounts.park}
+                          <span className="text-muted ms-2">S:</span>{entry.endgameCounts.shallow}
+                          <span className="text-muted ms-2">D:</span>{entry.endgameCounts.deep}
+                        </td>
+                        <td>
+                          <span className="badge bg-danger">{entry.foulCount}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="border-top pt-3">
+              <h6 className="fw-semibold mb-3">
+                <i className="fa fa-robot me-2 text-warning"></i>
+                AI Insights (Optional)
+              </h6>
+              <button
+                aria-label="ask genai"
+                className="btn btn-outline-primary"
+                onClick={askGenAI}
+                disabled={genaiText.length > 0}
+              >
+                <i className="fa fa-sparkles me-2"></i>
+                Generate AI Insights
+              </button>
+              {genaiText && (
+                <div className="alert alert-info mt-3">
+                  <strong className="d-block mb-2">
+                    <i className="fa fa-lightbulb me-2"></i>
+                    AI Analysis:
+                  </strong>
+                  {genaiText}
+                </div>
+              )}
+            </div>
           </>
         )}
-        <button aria-label="ask genai" className="btn btn-outline-primary" onClick={askGenAI} disabled={genaiText.length > 0}>
-          Ask GenAI (optional)
-        </button>
-        {genaiText && <div className="mt-3"><strong>GenAI:</strong> {genaiText}</div>}
       </div>
     </div>
   );

@@ -77,54 +77,143 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
   return (
     <div className="card-modern card">
       <div className="card-body">
-        <h5 className="card-title">Pit Scout</h5>
-        <div className="mb-3">
-          <label className="form-label">Team Number</label>
-          <input type="number" className="form-control" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
+        <div className="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h4 className="mb-1 fw-bold">Pit Scout</h4>
+            <p className="text-muted mb-0 small">Record robot capabilities and pit observations</p>
+          </div>
+          <button className="btn btn-outline-secondary" onClick={navigateHome}>
+            <i className="fa fa-arrow-left me-2"></i>
+            Back
+          </button>
         </div>
-        <div className="mb-3">
-          <label className="form-label">Drivetrain</label>
-          <select className="form-select" value={drivetrain} onChange={(e: any) => setDrivetrain(e.target.value)}>
-            {driveOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Auto Paths</label>
-          <div className="d-flex flex-wrap gap-2">
-            {autoOptions.map(opt => (
-              <label key={opt} className="form-check form-check-inline">
-                <input aria-label={`auto path ${opt}`} type="checkbox" className="form-check-input" checked={autoPaths.includes(opt)} onChange={() => toggleArray(opt, autoPaths, setAutoPaths)} />
-                <span className="form-check-label ms-1">{opt}</span>
+
+        <div className="row g-3">
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">
+              <i className="fa fa-hashtag me-2 text-primary"></i>
+              Team Number
+            </label>
+            <input
+              type="number"
+              className="form-control form-control-lg"
+              value={team || ''}
+              onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))}
+              placeholder="Enter team number"
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">
+              <i className="fa fa-cogs me-2 text-primary"></i>
+              Drivetrain Type
+            </label>
+            <select className="form-select form-select-lg" value={drivetrain} onChange={(e: any) => setDrivetrain(e.target.value)}>
+              {driveOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          </div>
+
+          <div className="col-12">
+            <label className="form-label fw-semibold">
+              <i className="fa fa-route me-2 text-success"></i>
+              Autonomous Capabilities
+            </label>
+            <div className="d-flex flex-wrap gap-2">
+              {autoOptions.map(opt => (
+                <div key={opt} className="form-check form-check-pill">
+                  <input
+                    aria-label={`auto path ${opt}`}
+                    type="checkbox"
+                    className="form-check-input"
+                    id={`auto-${opt}`}
+                    checked={autoPaths.includes(opt)}
+                    onChange={() => toggleArray(opt, autoPaths, setAutoPaths)}
+                  />
+                  <label className="form-check-label" htmlFor={`auto-${opt}`}>
+                    {opt}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-12">
+            <label className="form-label fw-semibold">
+              <i className="fa fa-map-marked-alt me-2 text-info"></i>
+              Preferred Zones
+            </label>
+            <div className="d-flex flex-wrap gap-2">
+              {zoneOptions.map(opt => (
+                <div key={opt} className="form-check form-check-pill">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id={`zone-${opt}`}
+                    checked={zones.includes(opt)}
+                    onChange={() => toggleArray(opt, zones, setZones)}
+                  />
+                  <label className="form-check-label" htmlFor={`zone-${opt}`}>
+                    {opt}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">
+              <i className="fa fa-clock me-2 text-warning"></i>
+              Cycle Time Estimate (seconds)
+            </label>
+            <input
+              type="number"
+              className="form-control"
+              value={cycleTime ?? ''}
+              onInput={(e: any) => setCycleTime(e.target.value ? parseInt(e.target.value) : null)}
+              placeholder="e.g., 8"
+            />
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label fw-semibold">
+              <i className="fa fa-mountain me-2 text-danger"></i>
+              Climbing Capability
+            </label>
+            <div className="form-check form-switch" style={{ paddingTop: '0.5rem' }}>
+              <input
+                type="checkbox"
+                className="form-check-input"
+                id="climbCheck"
+                checked={canClimb}
+                onChange={(e: any) => setCanClimb(e.target.checked)}
+                style={{ width: '3rem', height: '1.5rem' }}
+              />
+              <label className="form-check-label ms-2" htmlFor="climbCheck">
+                {canClimb ? 'Can Climb' : 'Cannot Climb'}
               </label>
-            ))}
+            </div>
+          </div>
+
+          <div className="col-12">
+            <label className="form-label fw-semibold">
+              <i className="fa fa-sticky-note me-2 text-secondary"></i>
+              Additional Notes
+            </label>
+            <textarea
+              className="form-control"
+              rows={4}
+              value={notes}
+              onInput={(e: any) => setNotes(e.target.value)}
+              placeholder="Record observations, strengths, weaknesses, or any other relevant information..."
+            ></textarea>
           </div>
         </div>
-        <div className="mb-3">
-          <label className="form-label">Preferred Zones</label>
-          <div className="d-flex flex-wrap gap-2">
-            {zoneOptions.map(opt => (
-              <label key={opt} className="form-check">
-                <input type="checkbox" className="form-check-input" checked={zones.includes(opt)} onChange={() => toggleArray(opt, zones, setZones)} />
-                {opt}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Cycle Time Estimate (s)</label>
-          <input type="number" className="form-control" value={cycleTime ?? ''} onInput={(e: any) => setCycleTime(e.target.value ? parseInt(e.target.value) : null)} />
-        </div>
-        <div className="mb-3 form-check">
-          <input type="checkbox" className="form-check-input" id="climbCheck" checked={canClimb} onChange={(e: any) => setCanClimb(e.target.checked)} />
-          <label className="form-check-label" htmlFor="climbCheck">Can Climb</label>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Notes</label>
-          <textarea className="form-control" rows={3} value={notes} onInput={(e: any) => setNotes(e.target.value)}></textarea>
-        </div>
-        <div className="d-flex gap-2">
-          <button className="btn btn-success" onClick={save}>Save Pit Data</button>
-          <button className="btn btn-secondary" onClick={navigateHome}>Back</button>
+
+        <div className="d-grid gap-2 mt-4">
+          <button className="btn btn-success btn-lg" onClick={save}>
+            <i className="fa fa-save me-2"></i>
+            Save Pit Scouting Data
+          </button>
         </div>
       </div>
     </div>

@@ -311,50 +311,154 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
     }
   }
 
+  const getCellLabel = (r: number, c: number): string => {
+    if (r === 0 && c === 0) return 'L1 Coral';
+    if (r === 0 && c === 1) return 'L2 Coral';
+    if (r === 0 && c === 2) return 'L3 Coral';
+    if (r === 1 && c === 0) return 'L4 Coral';
+    if (r === 1 && c === 1) return 'Processor';
+    if (r === 1 && c === 2) return 'Net';
+    if (r === 2 && c === 0) return 'Endgame';
+    if (r === 2 && c === 1) return 'Foul';
+    if (r === 2 && c === 2) return 'Undo';
+    return '';
+  };
+
+  const totalAuto = stats.auto.coral.L1 + stats.auto.coral.L2 + stats.auto.coral.L3 + stats.auto.coral.L4 + stats.auto.algae.processor + stats.auto.algae.net;
+  const totalTeleop = stats.teleop.coral.L1 + stats.teleop.coral.L2 + stats.teleop.coral.L3 + stats.teleop.coral.L4 + stats.teleop.algae.processor + stats.teleop.algae.net;
+
   return (
     <div className="card-modern card">
       <div className="card-body">
-        <div className="d-flex flex-wrap gap-2 mb-3 align-items-center" role="toolbar" aria-label="match controls">
-          {/* Phase toggle */}
-          <span className="badge bg-secondary" role="button" onClick={() => setAuto(a => !a)}>{auto ? 'AUTO' : 'TELEOP'}</span>
-          {/* Alliance selector */}
-          <div className="btn-group">
-            <button className={`btn btn-${alliance === 'red' ? 'danger' : 'outline-danger'}`} onClick={() => setAlliance('red')}>Red</button>
-            <button className={`btn btn-${alliance === 'blue' ? 'primary' : 'outline-primary'}`} onClick={() => setAlliance('blue')}>Blue</button>
-          </div>
-          {/* Mobility toggle; only active during AUTO */}
-          <button className={`btn ${stats.auto.mobility ? 'btn-success' : 'btn-outline-secondary'}`} disabled={!auto} onClick={toggleMobility}>Mobility</button>
-          {/* Timer display; click to start/stop */}
-          <span className="badge bg-dark" role="button" onClick={() => setTimerActive(a => !a)} title="Tap to start/stop timer">⏱ {formatTime(elapsed)}</span>
-          {/* Team and match inputs */}
-          <input aria-label="team number" className="form-control w-auto" type="number" placeholder="Team" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
-          <input aria-label="match number" className="form-control w-auto" type="number" placeholder="Match" value={game || ''} onInput={(e: any) => setGame(parseInt(e.target.value || '0'))} />
-          {/* Save button */}
-          <button className="btn btn-success ms-auto" onClick={save}>Save Match</button>
+        <div className="d-flex align-items-center justify-content-between mb-3">
+          <h4 className="mb-0 fw-bold">Quick Scout</h4>
+          <span className="badge bg-primary" style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>{auto ? 'AUTONOMOUS' : 'TELEOPERATED'}</span>
         </div>
-        {/* Render the grid of buttons */}
-        <div className="row g-2">
+
+        <div className="row g-3 mb-3">
+          <div className="col-md-6">
+            <label className="form-label small text-muted fw-bold">MATCH INFO</label>
+            <div className="d-flex gap-2">
+              <input
+                aria-label="team number"
+                className="form-control"
+                type="number"
+                placeholder="Team #"
+                value={team || ''}
+                onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))}
+              />
+              <input
+                aria-label="match number"
+                className="form-control"
+                type="number"
+                placeholder="Match #"
+                value={game || ''}
+                onInput={(e: any) => setGame(parseInt(e.target.value || '0'))}
+              />
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <label className="form-label small text-muted fw-bold">ALLIANCE</label>
+            <div className="btn-group w-100" role="group">
+              <button
+                type="button"
+                className={`btn ${alliance === 'red' ? 'btn-danger' : 'btn-outline-danger'}`}
+                onClick={() => setAlliance('red')}
+              >
+                <i className="fa fa-circle me-2"></i>Red Alliance
+              </button>
+              <button
+                type="button"
+                className={`btn ${alliance === 'blue' ? 'btn-primary' : 'btn-outline-primary'}`}
+                onClick={() => setAlliance('blue')}
+              >
+                <i className="fa fa-circle me-2"></i>Blue Alliance
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="d-flex flex-wrap gap-2 mb-3 align-items-center" role="toolbar" aria-label="match controls">
+          <button
+            className="btn btn-outline-primary"
+            onClick={() => setAuto(a => !a)}
+            title="Toggle match phase"
+          >
+            <i className="fa fa-sync-alt me-2"></i>
+            {auto ? 'Switch to Teleop' : 'Switch to Auto'}
+          </button>
+          <button
+            className={`btn ${stats.auto.mobility ? 'btn-success' : 'btn-outline-success'}`}
+            disabled={!auto}
+            onClick={toggleMobility}
+            title="Toggle mobility bonus"
+          >
+            <i className={`fa ${stats.auto.mobility ? 'fa-check-circle' : 'fa-circle'} me-2`}></i>
+            Mobility
+          </button>
+          <button
+            className={`btn ${timerActive ? 'btn-warning' : 'btn-outline-secondary'}`}
+            onClick={() => setTimerActive(a => !a)}
+            title="Start/stop timer"
+          >
+            <i className="fa fa-stopwatch me-2"></i>
+            {formatTime(elapsed)}
+          </button>
+          <button className="btn btn-success ms-auto" onClick={save}>
+            <i className="fa fa-save me-2"></i>
+            Save Match
+          </button>
+        </div>
+
+        <div className="alert alert-light border mb-3">
+          <div className="row text-center">
+            <div className="col">
+              <div className="fw-bold text-primary">{totalAuto}</div>
+              <div className="small text-muted">Auto Scored</div>
+            </div>
+            <div className="col">
+              <div className="fw-bold text-success">{totalTeleop}</div>
+              <div className="small text-muted">Teleop Scored</div>
+            </div>
+            <div className="col">
+              <div className="fw-bold text-danger">{stats.fouls}</div>
+              <div className="small text-muted">Fouls</div>
+            </div>
+            <div className="col">
+              <div className="fw-bold text-info">{stats.endgame.state}</div>
+              <div className="small text-muted">Endgame</div>
+            </div>
+          </div>
+        </div>
+
+        <label className="form-label small text-muted fw-bold mb-2">SCORING GRID</label>
+        <div className="row g-2 mb-2">
           {Array.from({ length: GRID.rows }).map((_, r) => (
-            <div className="col-12 d-flex gap-2" style={{ height: '7rem' }}>
-              {Array.from({ length: GRID.cols }).map((_, c) => (
-                <button
-                  key={`${r}-${c}`}
-                  className="flex-fill btn border"
-                  style={sliceStyle(r, c)}
-                  onClick={() => clickCell(r, c)}
-                  aria-label={`action cell ${r + 1}-${c + 1}`}
-                >
-                  .
-                </button>
-              ))}
+            <div key={r} className="col-12 d-flex gap-2" style={{ height: '7rem' }}>
+              {Array.from({ length: GRID.cols }).map((_, c) => {
+                const cellNum = r * GRID.cols + c + 1;
+                return (
+                  <button
+                    key={`${r}-${c}`}
+                    className="flex-fill btn border position-relative shadow-sm quick-scout-cell"
+                    style={sliceStyle(r, c)}
+                    onClick={() => clickCell(r, c)}
+                    aria-label={`${getCellLabel(r, c)} - Press ${cellNum}`}
+                  >
+                    <span className="quick-scout-cell-overlay">
+                      <span className="badge bg-dark bg-opacity-75">{cellNum}</span>
+                      <span className="quick-scout-cell-label">{getCellLabel(r, c)}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ))}
         </div>
-        {/* Display summary stats */}
-        <div className="mt-3 small text-muted">
-          Auto: {stats.auto.coral.L1 + stats.auto.coral.L2 + stats.auto.coral.L3 + stats.auto.coral.L4 + stats.auto.algae.processor + stats.auto.algae.net} scored
-          {stats.auto.mobility ? ' + Mobility' : ''} • Teleop: {stats.teleop.coral.L1 + stats.teleop.coral.L2 + stats.teleop.coral.L3 + stats.teleop.coral.L4 + stats.teleop.algae.processor + stats.teleop.algae.net} scored
-          • Fouls: {stats.fouls} • Endgame: {stats.endgame.state}
+        <div className="small text-muted text-center">
+          <i className="fa fa-keyboard me-1"></i>
+          Keyboard shortcuts: Press 1-9 for quick actions, U for undo, M for mobility
         </div>
       </div>
     </div>
