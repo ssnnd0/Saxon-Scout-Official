@@ -1,0 +1,45 @@
+[
+  {
+    "type": "console",
+    "text": "You are running production build of Inferno in development mode. Use dev:module entry point.",
+    "location": {
+      "url": "http://localhost:8787/bundle.js",
+      "lineNumber": 4574,
+      "columnNumber": 12
+    }
+  },
+  {
+    "type": "console",
+    "text": "Starting Saxon Scout application...",
+    "location": {
+      "url": "http://localhost:8787/bundle.js",
+      "lineNumber": 19483,
+      "columnNumber": 10
+    }
+  },
+  {
+    "type": "console",
+    "text": "Root element: JSHandle@node",
+    "location": {
+      "url": "http://localhost:8787/bundle.js",
+      "lineNumber": 19484,
+      "columnNumber": 10
+    }
+  },
+  {
+    "type": "console",
+    "text": "App rendered successfully",
+    "location": {
+      "url": "http://localhost:8787/bundle.js",
+      "lineNumber": 19527,
+      "columnNumber": 12
+    }
+  },
+  {
+    "type": "globals",
+    "value": {
+      "__saxon_app_ready": true,
+      "__saxon_app_error": null
+    }
+  }
+]

@@ -108,6 +108,33 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
+  // Keyboard shortcuts: 1-9 map to grid cells (left-to-right, top-to-bottom)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      // Prevent shortcuts when focusing an input
+      const tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const key = e.key;
+      if (/^[1-9]$/.test(key)) {
+        const n = parseInt(key, 10) - 1; // 0..8
+        const r = Math.floor(n / GRID.cols);
+        const c = n % GRID.cols;
+        clickCell(r, c);
+      } else if (key === 'u' || key === 'U') {
+        undo();
+      } else if (key === 'f' || key === 'F') {
+        recordFoul();
+      } else if (key === 'm' || key === 'M') {
+        toggleMobility();
+      } else if (key === 's' || key === 'S') {
+        // attempt save
+        save();
+      }
+    }
+    window.addEventListener('keydown', onKey as any);
+    return () => window.removeEventListener('keydown', onKey as any);
+  }, [stats, history, team, game, alliance, scouter, root]);
+
   /**
    * Register a coral scoring event. Increments the appropriate coral level
    * counter for the current phase and records the action for undo.
@@ -285,9 +312,9 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
   }
 
   return (
-    <div className="card shadow-sm">
+    <div className="card-modern card">
       <div className="card-body">
-        <div className="d-flex flex-wrap gap-2 mb-3 align-items-center">
+        <div className="d-flex flex-wrap gap-2 mb-3 align-items-center" role="toolbar" aria-label="match controls">
           {/* Phase toggle */}
           <span className="badge bg-secondary" role="button" onClick={() => setAuto(a => !a)}>{auto ? 'AUTO' : 'TELEOP'}</span>
           {/* Alliance selector */}
@@ -300,8 +327,8 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
           {/* Timer display; click to start/stop */}
           <span className="badge bg-dark" role="button" onClick={() => setTimerActive(a => !a)} title="Tap to start/stop timer">⏱ {formatTime(elapsed)}</span>
           {/* Team and match inputs */}
-          <input className="form-control w-auto" type="number" placeholder="Team" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
-          <input className="form-control w-auto" type="number" placeholder="Match" value={game || ''} onInput={(e: any) => setGame(parseInt(e.target.value || '0'))} />
+          <input aria-label="team number" className="form-control w-auto" type="number" placeholder="Team" value={team || ''} onInput={(e: any) => setTeam(parseInt(e.target.value || '0'))} />
+          <input aria-label="match number" className="form-control w-auto" type="number" placeholder="Match" value={game || ''} onInput={(e: any) => setGame(parseInt(e.target.value || '0'))} />
           {/* Save button */}
           <button className="btn btn-success ms-auto" onClick={save}>Save Match</button>
         </div>
@@ -315,6 +342,7 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
                   className="flex-fill btn border"
                   style={sliceStyle(r, c)}
                   onClick={() => clickCell(r, c)}
+                  aria-label={`action cell ${r + 1}-${c + 1}`}
                 >
                   .
                 </button>

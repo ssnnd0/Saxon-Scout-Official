@@ -75,7 +75,7 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
   }
 
   return (
-    <div className="card">
+    <div className="card-modern card">
       <div className="card-body">
         <h5 className="card-title">Pit Scout</h5>
         <div className="mb-3">
@@ -92,9 +92,9 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
           <label className="form-label">Auto Paths</label>
           <div className="d-flex flex-wrap gap-2">
             {autoOptions.map(opt => (
-              <label key={opt} className="form-check">
-                <input type="checkbox" className="form-check-input" checked={autoPaths.includes(opt)} onChange={() => toggleArray(opt, autoPaths, setAutoPaths)} />
-                {opt}
+              <label key={opt} className="form-check form-check-inline">
+                <input aria-label={`auto path ${opt}`} type="checkbox" className="form-check-input" checked={autoPaths.includes(opt)} onChange={() => toggleArray(opt, autoPaths, setAutoPaths)} />
+                <span className="form-check-label ms-1">{opt}</span>
               </label>
             ))}
           </div>
@@ -116,7 +116,7 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
         </div>
         <div className="mb-3 form-check">
           <input type="checkbox" className="form-check-input" id="climbCheck" checked={canClimb} onChange={(e: any) => setCanClimb(e.target.checked)} />
-          <label className="form-check-label" for="climbCheck">Can Climb</label>
+          <label className="form-check-label" htmlFor="climbCheck">Can Climb</label>
         </div>
         <div className="mb-3">
           <label className="form-label">Notes</label>

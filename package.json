@@ -1,4 +1,14 @@
 {
+  "scripts": {
+    "clean": "node scripts/clean.js",
+    "build": "npm run clean && npm run build:server && npm run build:app",
+    "build:server": "tsc -p server/tsconfig.json",
+    "build:app": "node scripts/build-app.js",
+    "start": "node dist/server/server.js",
+    "serve-app": "http-server dist/app -p 8080",
+    "dev": "ts-node server/src/server.ts",
+    "test": "node scripts/test-headless.js"
+  },
   "dependencies": {
     "@fortawesome/fontawesome-free": "6.7.2",
     "@fortawesome/fontawesome-svg-core": "6.7.2",
@@ -25,14 +35,7 @@
     "typescript": "5.8.3"
   },
   "devDependencies": {
-    "esbuild": "0.19.4"
-  },
-  "scripts": {
-    "build:server": "tsc -p server/tsconfig.json",
-    "build:app": "node scripts/build-app.js",
-    "build": "npm run build:server && npm run build:app",
-    "start": "node dist/server/server.js",
-    "serve-app": "http-server dist/app -p 8080",
-    "dev": "ts-node server/src/server.ts"
+    "esbuild": "0.19.4",
+    "puppeteer": "^24.24.0"
   }
 }

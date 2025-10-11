@@ -117,14 +117,14 @@ export default function Export({ root, navigateHome }: ExportProps) {
   }
 
   return (
-    <div className="card">
+    <div className="card-modern card">
       <div className="card-body">
         <h5 className="card-title">Export Data</h5>
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <div className="alert alert-danger" role="alert">{error}</div>}
         <div className="mb-3 d-grid gap-2">
-          <button className="btn btn-primary" onClick={exportMatches}>Export Matches (ZIP)</button>
+          <button aria-label="export matches" className="btn btn-primary" onClick={exportMatches}>Export Matches (ZIP)</button>
           {matchUrl && <a className="btn btn-outline-primary" href={matchUrl} download="matches_export.zip">Download Matches ZIP</a>}
-          <button className="btn btn-success" onClick={exportPit}>Export Pit Data (ZIP)</button>
+          <button aria-label="export pit data" className="btn btn-success" onClick={exportPit}>Export Pit Data (ZIP)</button>
           {pitUrl && <a className="btn btn-outline-success" href={pitUrl} download="pit_export.zip">Download Pit ZIP</a>}
           <button className="btn btn-secondary" onClick={navigateHome}>Back</button>
         </div>

@@ -175,10 +175,10 @@ export default function InfoViewer({ root }: { root: DirHandle | null }) {
   }
 
   return (
-    <div className="card">
+    <div className="card-modern card">
       <div className="card-body">
         <h5>Information Viewer</h5>
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <div className="alert alert-danger" role="alert">{error}</div>}
         {!summary.length && !error && <p className="text-muted">No matches yet.</p>}
         {summary.length > 0 && (
           <>
@@ -213,10 +213,10 @@ export default function InfoViewer({ root }: { root: DirHandle | null }) {
                 </tbody>
               </table>
             </div>
-            <canvas ref={chartRef} style={{ maxWidth: '100%', maxHeight: '300px' }} />
+            <canvas aria-label="team stats chart" ref={chartRef} style={{ maxWidth: '100%', maxHeight: '300px' }} />
           </>
         )}
-        <button className="btn btn-outline-primary" onClick={askGenAI} disabled={genaiText.length > 0}>
+        <button aria-label="ask genai" className="btn btn-outline-primary" onClick={askGenAI} disabled={genaiText.length > 0}>
           Ask GenAI (optional)
         </button>
         {genaiText && <div className="mt-3"><strong>GenAI:</strong> {genaiText}</div>}

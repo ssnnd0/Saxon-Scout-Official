@@ -3,6 +3,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import path from 'path';
 
 // Configure the PostgreSQL connection pool. When running in development or
 // locally via docker-compose, DATABASE_URL will typically be undefined and
@@ -12,6 +13,27 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL || 'postgres:
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
+
+// Note: The frontend is built into dist/app relative to the project root.
+// At runtime we serve those static files so the same process can host the API and the SPA.
+const staticDir = path.resolve(__dirname, '../../dist/app');
+
+// Serve static files from the app build directory
+console.log('Serving static files from:', staticDir);
+app.use(express.static(staticDir));
+
+// Error handling for static files
+app.use((err, req, res, next) => {
+  console.error('Static file error:', err);
+  res.status(500).send('Internal Server Error');
+});
+
+// Always return index.html for any non-API routes (SPA routing)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(staticDir, 'index.html'));
+});
+
 
 /**
  * Fetch an existing user ID by name or create a new record. Names are stored
@@ -82,6 +104,31 @@ app.post('/api/genai/summarize', async (req, res) => {
 // environment. If this script is run by node directly, the server begins
 // listening; in tests it can be imported and started separately.
 const port = parseInt(process.env.PORT || '8787', 10);
+// Serve static frontend when available (dist/app)
+try {
+  const frontendPath = path.resolve(__dirname, '../../dist/app');
+  app.use(express.static(frontendPath));
+  // SPA fallback
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+} catch (e) {
+  console.warn('Frontend static files not available:', e.message || e);
+}
+
 app.listen(port, () => {
   console.log(`server listening on port ${port}`);
+});
+  
+// Client log endpoint for capturing browser-side errors during debugging
+app.post('/__client_log', express.json({ limit: '50kb' }), (req, res) => {
+  try {
+    const payload = req.body || {};
+    console.log('[client-log]', JSON.stringify(payload));
+    res.status(204).end();
+  } catch (err) {
+    console.error('Failed to record client log:', err);
+    res.status(500).end();
+  }
 });
