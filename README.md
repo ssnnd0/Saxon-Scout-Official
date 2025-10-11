@@ -188,5 +188,6 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## Acknowledgements
 
-Created by Team 611 Saxon Robotics for the FRC 2026 season.
+Created by Team 611 Saxon Robotics  for the FRC 2026 season.
+Email us at: [sthornton@saxonrobotics.org](mailto:sthornton@saxonrobotics.org)
 
