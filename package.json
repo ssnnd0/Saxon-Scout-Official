@@ -1,41 +1,32 @@
 {
+  "name": "saxon-scout",
+  "version": "1.0.0",
+  "description": "A local-first scouting platform for FRC events",
+  "type": "module",
   "scripts": {
-    "clean": "node scripts/clean.js",
+    "dev": "concurrently \"npm run build:app:watch\" \"npm run server:dev\"",
     "build": "npm run clean && npm run build:server && npm run build:app",
     "build:server": "tsc -p server/tsconfig.json",
     "build:app": "node scripts/build-app.js",
+    "build:app:watch": "node scripts/build-app.js --dev",
+    "clean": "node scripts/clean.js",
     "start": "node dist/server/server.js",
-    "serve-app": "http-server dist/app -p 8080",
-    "dev": "ts-node server/src/server.ts",
-    "test": "node scripts/test-headless.js"
+    "server:dev": "node --watch dist/server/server.js",
+    "test": "node server/test-server.js",
+    "lint": "eslint app/src server/src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "6.7.2",
-    "@fortawesome/fontawesome-svg-core": "6.7.2",
-    "@fortawesome/free-brands-svg-icons": "6.7.2",
-    "@fortawesome/free-regular-svg-icons": "6.7.2",
-    "@fortawesome/free-solid-svg-icons": "6.7.2",
-    "@types/prismjs": "1.26.5",
-    "autoprefixer": "10.4.21",
-    "bootstrap": "5.3.3",
-    "chart.js": "4.4.0",
-    "cookie-parser": "^1.4.7",
-    "express": "^4.21.2",
-    "http-server": "14.1.1",
-    "image-size": "2.0.2",
-    "inferno": "7.4.11",
+    "inferno": "^8.2.0",
+    "bootstrap": "^5.3.0",
     "jszip": "^3.10.1",
-    "pg": "8.11.1",
-    "postcss": "8.5.6",
-    "pptxgenjs": "4.0.0",
-    "prismjs": "1.30.0",
-    "sharp": "0.34.1",
-    "tailwindcss": "4.1.10",
-    "ts-node": "10.9.2",
-    "typescript": "5.8.3"
+    "chart.js": "^4.4.0",
+    "express": "^4.18.2",
+    "cookie-parser": "^1.4.6",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
-    "esbuild": "0.19.4",
-    "puppeteer": "^24.24.0"
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3",
+    "concurrently": "^8.2.2"
   }
 }

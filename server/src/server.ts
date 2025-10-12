@@ -28,6 +28,24 @@ app.use((err, req, res, next) => {
   res.status(500).send('Internal Server Error');
 });
 
+// Add proper headers for service worker
+app.use((req, res, next) => {
+  // Allow service worker
+  if (req.path === '/service-worker.js') {
+    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    res.setHeader('Service-Worker-Allowed', '/');
+  }
+  // Set manifest headers
+  if (req.path === '/manifest.json') {
+    res.setHeader('Content-Type', 'application/manifest+json');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+  }
+  next();
+});
+
+// Serve manifest and service worker from root
+app.use(express.static(path.join(__dirname, '../../dist/app')));
+
 // Always return index.html for any non-API routes (SPA routing)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();

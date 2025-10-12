@@ -7,6 +7,8 @@ import InfoViewer from './InfoViewer';
 import PitScout from './PitScout';
 import Export from './Export';
 import Home from './Home';
+import Index from './Index';
+import '../styles/theme.css';
 
 interface AppState {
   root: DirHandle | null;
@@ -18,10 +20,9 @@ interface AppState {
 }
 
 /**
- * Top‑level application component. Manages global state such as the selected
- * root folder and the currently logged‑in scouter. Presents buttons for
- * selecting a data directory and logging in, and displays the scouting and
- * information viewer panels.
+ * Top-level application component. Manages global state such as the selected
+ * root folder and the currently logged-in scouter. Handles initialization,
+ * file system access detection, and view routing.
  */
 export default class App extends Component<{}, AppState> {
   constructor(props: {}) {
@@ -37,7 +38,6 @@ export default class App extends Component<{}, AppState> {
   }
 
   componentDidMount() {
-    // Start initialization process
     this.initializeApp();
   }
 
@@ -74,12 +74,11 @@ export default class App extends Component<{}, AppState> {
         }
       }
 
-      // Load cached configuration (don't wait for it)
+      // Load cached configuration
       this.loadCachedConfig().catch(err => {
         console.warn('Failed to load cached config:', err);
       });
 
-      // Successfully initialized
       console.log('Application initialization complete');
       this.setState({ isInitializing: false });
       
@@ -96,25 +95,11 @@ export default class App extends Component<{}, AppState> {
     try {
       const config = localStorage.getItem('saxon_scout_config');
       if (config) {
-        const parsedConfig = JSON.parse(config);
-        // Apply any saved configurations
-        // ...
+        JSON.parse(config);
+        // Apply any saved configurations here
       }
     } catch (err) {
       console.warn('Failed to load cached config:', err);
-    }
-  }
-
-  async ensureDirectoryStructure() {
-    // If we have a saved root directory, ensure required folders exist
-    const root = this.state.root;
-    if (root) {
-      await Promise.all([
-        root.getDirectoryHandle('matches', { create: true }),
-        root.getDirectoryHandle('pit', { create: true }),
-        root.getDirectoryHandle('exports', { create: true }),
-        root.getDirectoryHandle('logs', { create: true })
-      ]);
     }
   }
 
@@ -123,21 +108,6 @@ export default class App extends Component<{}, AppState> {
       console.log('Requesting directory access...');
       const dir = await pickRoot();
       console.log('Directory access granted');
-      
-      // Create required subdirectories
-      try {
-        await Promise.all([
-          dir.getDirectoryHandle('matches', { create: true }),
-          dir.getDirectoryHandle('pit', { create: true }),
-          dir.getDirectoryHandle('exports', { create: true }),
-          dir.getDirectoryHandle('logs', { create: true })
-        ]);
-        console.log('Created required subdirectories');
-      } catch (err) {
-        console.error('Failed to create subdirectories:', err);
-        throw new Error('Failed to create required folders. Please check permissions.');
-      }
-
       this.setState({ root: dir });
     } catch (err) {
       console.error('Directory picker failed:', err);
@@ -155,7 +125,6 @@ export default class App extends Component<{}, AppState> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
       });
-      // Save the scouter name for future sessions
       localStorage.setItem('saxon_scout_user', name);
     } catch (err) {
       console.error(err);
@@ -165,6 +134,11 @@ export default class App extends Component<{}, AppState> {
     }
   }
 
+  logout = () => {
+    this.setState({ scouter: '', root: null, view: 'home' });
+    localStorage.removeItem('saxon_scout_user');
+  }
+
   setView = (view: 'home'|'quick'|'pit'|'info'|'export'|'settings') => {
     this.setState({ view });
   }
@@ -172,76 +146,125 @@ export default class App extends Component<{}, AppState> {
   render() {
     const { root, scouter, view, isInitializing, hasFileSystemAccess, initError } = this.state;
     
+    // Show loading state
     if (isInitializing) {
       return (
-        <div className="container py-4 text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Initializing...</span>
-          </div>
-          <p className="mt-3">Initializing Saxon Scout...</p>
+        <div className="app-shell">
+          <main className="app-container d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
+            <div className="text-center">
+              <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
+                <span className="visually-hidden">Initializing...</span>
+              </div>
+              <h2 className="mb-2">Saxon Scout</h2>
+              <p className="text-muted">Initializing application...</p>
+            </div>
+          </main>
         </div>
       );
     }
 
+    // Show initialization error
     if (initError) {
       return (
-        <div className="container py-4">
-          <div className="alert alert-danger">
-            <h4 className="alert-heading">Initialization Error</h4>
-            <p>{initError}</p>
-            <hr />
-            <p className="mb-0">
-              Please check your browser compatibility and try refreshing the page.
-              If the problem persists, contact technical support.
-            </p>
-          </div>
+        <div className="app-shell">
+          <main className="app-container">
+            <div className="alert alert-danger rounded-3 shadow-sm" style={{ marginTop: '2rem' }}>
+              <h4 className="alert-heading d-flex align-items-center gap-2">
+                <i className="fa fa-exclamation-triangle"></i>
+                Initialization Error
+              </h4>
+              <p>{initError}</p>
+              <hr />
+              <p className="mb-0">
+                Please check your browser compatibility and try refreshing the page.
+              </p>
+            </div>
+          </main>
         </div>
       );
     }
 
+    // Show browser support error
     if (!hasFileSystemAccess) {
       return (
-        <div className="container py-4">
-          <div className="alert alert-warning">
-            <h4 className="alert-heading">Browser Not Supported</h4>
-            <p>
-              Saxon Scout requires a modern browser with File System Access API support.
-              Please use a supported browser like Chrome, Edge, or Opera.
-            </p>
-          </div>
+        <div className="app-shell">
+          <main className="app-container">
+            <div className="alert alert-warning rounded-3 shadow-sm" style={{ marginTop: '2rem' }}>
+              <h4 className="alert-heading d-flex align-items-center gap-2">
+                <i className="fa fa-info-circle"></i>
+                Browser Not Supported
+              </h4>
+              <p>
+                Saxon Scout requires a modern browser with File System Access API support.
+                Please use Chrome, Edge, or Opera (version 86+).
+              </p>
+            </div>
+          </main>
         </div>
       );
     }
-    
+
+    // Show index/welcome page if not fully setup
+    if (!root || !scouter) {
+      return (
+        <Index 
+          root={root} 
+          scouter={scouter} 
+          onPickFolder={this.handlePick}
+          onLogin={this.login}
+        />
+      );
+    }
+
+    // Show main application with navbar
     return (
-      <div>
-        <nav className="navbar app-navbar px-3">
-          <div className="container-fluid">
+      <div className="app-shell">
+        <nav className="navbar app-navbar px-3 shadow-sm">
+          <div className="container-fluid" style={{ maxWidth: 'var(--max-width)' }}>
             <div className="d-flex align-items-center gap-3">
-              <img src="/app/assets/Logo+611.png" alt="logo" className="app-logo" />
+              <img src="/app/assets/Logo+611.png" alt="Saxon Scout Logo" className="app-logo" />
               <div className="nav-title">Saxon Scout</div>
             </div>
-            <div className="d-flex align-items-center gap-2">
-              <button className="btn btn-outline-light btn-sm" onClick={this.handlePick}>Pick Data Folder</button>
-              <button className="btn btn-light btn-sm" onClick={this.login}>{scouter ? `Logged in: ${scouter}` : 'Login'}</button>
-              {root && scouter && view !== 'home' && (
-                <button className="btn btn-light btn-sm" onClick={() => this.setView('home')}>Home</button>
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              {root && (
+                <span className="badge bg-success d-flex align-items-center gap-1">
+                  <i className="fa fa-check-circle"></i>
+                  <span className="d-none d-sm-inline">Folder Connected</span>
+                </span>
               )}
+              <span className="badge bg-info d-flex align-items-center gap-1">
+                <i className="fa fa-user"></i>
+                <span>{scouter}</span>
+              </span>
+              {view !== 'home' && (
+                <button className="btn btn-outline-light btn-sm d-flex align-items-center gap-2" onClick={() => this.setView('home')}>
+                  <i className="fa fa-home"></i>
+                  <span className="d-none d-sm-inline">Home</span>
+                </button>
+              )}
+              <button className="btn btn-outline-light btn-sm d-flex align-items-center gap-2" onClick={this.logout}>
+                <i className="fa fa-sign-out-alt"></i>
+                <span className="d-none d-sm-inline">Logout</span>
+              </button>
             </div>
           </div>
         </nav>
 
         <main className="app-container">
-          {!root && <div className="alert alert-info">Please pick a data folder to get started.</div>}
-
-          {root && scouter && view === 'home' && <div className="card-modern card p-3"><Home navigate={(v: string) => this.setView(v as any)} /></div>}
-          {root && scouter && view === 'quick' && <div className="card-modern card p-3"><QuickScout root={root} scouter={scouter} /></div>}
-          {root && scouter && view === 'pit' && <div className="card-modern card p-3"><PitScout root={root} scouter={scouter} navigateHome={() => this.setView('home')} /></div>}
-          {root && scouter && view === 'info' && <div className="card-modern card p-3"><InfoViewer root={root} /></div>}
-          {root && scouter && view === 'export' && <div className="card-modern card p-3"><Export root={root} navigateHome={() => this.setView('home')} /></div>}
+          {view === 'home' && <Home navigate={this.setView} />}
+          {view === 'quick' && <QuickScout root={root} scouter={scouter} />}
+          {view === 'pit' && <PitScout root={root} scouter={scouter} navigateHome={() => this.setView('home')} />}
+          {view === 'info' && <InfoViewer root={root} />}
+          {view === 'export' && <Export root={root} navigateHome={() => this.setView('home')} />}
         </main>
 
-        <footer className="app-footer">© Saxon Scout — local-first scouting. Built for events.</footer>
+        <footer className="app-footer">
+          <div className="d-flex align-items-center justify-content-center gap-2">
+            <span>© Saxon Scout</span>
+            <span className="text-muted">|</span>
+            <span className="text-muted">Local-first scouting for FRC events</span>
+          </div>
+        </footer>
       </div>
     );
   }

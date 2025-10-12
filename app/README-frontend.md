@@ -26,4 +26,3 @@ Helpful shortcuts (in Quick Scout view)
 - m → toggle mobility (AUTO only)
 - s → save current match
 
-If you need a development workflow (hot reload) I can add a simple dev server step next.

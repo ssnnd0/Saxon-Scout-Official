@@ -6,60 +6,99 @@ interface HomeProps {
   navigate: (view: string) => void;
 }
 
-/**
- * Home (kiosk) screen presenting primary actions. Each button navigates to a
- * different view (Quick Scout, Pit Scout, Info Viewer, Export, Settings).
- */
 const Home: FC<HomeProps> = ({ navigate }) => {
+  const modules = [
+    {
+      id: 'quick',
+      icon: 'fa-bolt',
+      title: 'Quick Scout',
+      description: 'Fast match scoring with a large target grid designed for rapid input during matches.',
+      color: 'primary',
+      bgGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    },
+    {
+      id: 'pit',
+      icon: 'fa-tools',
+      title: 'Pit Scout',
+      description: 'Record robot capabilities, drivetrain type, climb ability, and other pit observations.',
+      color: 'info',
+      bgGradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+    },
+    {
+      id: 'info',
+      icon: 'fa-chart-line',
+      title: 'View Info',
+      description: 'Analyze collected data with summaries, charts, and quick team insights.',
+      color: 'success',
+      bgGradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+    },
+    {
+      id: 'export',
+      icon: 'fa-file-archive',
+      title: 'Export Data',
+      description: 'Export matches and pit data as CSV inside a ZIP for analysis or submission.',
+      color: 'warning',
+      bgGradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+    }
+  ];
+
   return (
-    <div className="home-grid">
-      <div className="card home-card">
-        <div>
-          <i className="fa fa-bolt"></i>
-        </div>
-        <div>
-          <h5>Quick Scout</h5>
-          <p className="muted-small">Fast match scoring with a large target grid—designed for rapid input on mobile devices.</p>
-        </div>
-        <div className="mt-auto w-100">
-          <button className="btn btn-primary w-100" onClick={() => navigate('quick')}>Open</button>
-        </div>
+    <div>
+      <div className="mb-4">
+        <h2 className="fw-bold mb-2">
+          <i className="fa fa-home me-2 text-primary"></i>
+          Welcome Back
+        </h2>
+        <p className="text-muted">Select a module to get started with your scouting session.</p>
       </div>
 
-      <div className="card home-card">
-        <div><i className="fa fa-tools"></i></div>
-        <div>
-          <h5>Pit Scout</h5>
-          <p className="muted-small">Record robot capabilities, drivetrain, climb ability and notes for scouting analysis.</p>
-        </div>
-        <div className="mt-auto w-100"><button className="btn btn-info w-100" onClick={() => navigate('pit')}>Open</button></div>
+      <div className="home-grid">
+        {modules.map(module => (
+          <div 
+            key={module.id} 
+            className="card home-card card-modern home-card-hover"
+            style={{ 
+              borderTop: '4px solid transparent',
+              borderImage: module.bgGradient + ' 1',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <div 
+              className="home-card-icon-wrapper" 
+              style={{ 
+                background: module.bgGradient,
+                marginBottom: '1rem'
+              }}
+            >
+              <i className={`fa ${module.icon} text-white`} style={{ fontSize: '1.5rem' }}></i>
+            </div>
+
+            <div className="flex-grow-1">
+              <h5 className="fw-bold mb-2" style={{ color: '#212529' }}>
+                {module.title}
+              </h5>
+              <p className="muted-small mb-0" style={{ fontSize: '0.95rem', color: '#6c757d' }}>
+                {module.description}
+              </p>
+            </div>
+
+            <div className="mt-3 w-100">
+              <button
+                className={`btn btn-${module.color} w-100 d-flex align-items-center justify-content-center gap-2`}
+                onClick={() => navigate(module.id)}
+                style={{ fontWeight: '500', padding: '0.5rem 1rem', minHeight: '40px' }}
+              >
+                <span>Open</span>
+                <i className="fa fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="card home-card">
-        <div><i className="fa fa-chart-bar"></i></div>
-        <div>
-          <h5>View Info</h5>
-          <p className="muted-small">Summaries, charts and quick team insights from collected match data.</p>
-        </div>
-        <div className="mt-auto w-100"><button className="btn btn-success w-100" onClick={() => navigate('info')}>Open</button></div>
-      </div>
-
-      <div className="card home-card">
-        <div><i className="fa fa-file-archive"></i></div>
-        <div>
-          <h5>Export</h5>
-          <p className="muted-small">Export matches and pit data as CSV inside a ZIP for analysis or event submission.</p>
-        </div>
-        <div className="mt-auto w-100"><button className="btn btn-warning w-100" onClick={() => navigate('export')}>Open</button></div>
-      </div>
-
-      <div className="card home-card">
-        <div><i className="fa fa-cog"></i></div>
-        <div>
-          <h5>Settings</h5>
-          <p className="muted-small">Configure app preferences and integrations (coming soon).</p>
-        </div>
-        <div className="mt-auto w-100"><button className="btn btn-secondary w-100" onClick={() => navigate('settings')}>Open</button></div>
+      <div className="alert alert-light border mt-4" style={{ borderRadius: '8px' }}>
+        <i className="fa fa-info-circle me-2 text-primary"></i>
+        <strong>Tip:</strong> Use the buttons above to navigate between different scouting modes. All data is stored locally on your device.
       </div>
     </div>
   );

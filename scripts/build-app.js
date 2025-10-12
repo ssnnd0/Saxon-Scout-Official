@@ -1,212 +1,182 @@
+#!/usr/bin/env node
+
+/**
+ * Build script for Saxon Scout app
+ * Compiles TypeScript/JSX with esbuild and copies PWA assets
+ */
+
 const esbuild = require('esbuild');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+
+const isDev = process.argv.includes('--dev');
+const distDir = path.resolve(__dirname, '../dist/app');
 
 async function build() {
-  const outdir = path.resolve(__dirname, '../dist/app');
-  // Clean previous build output to avoid duplicate emitted assets
-  if (fs.existsSync(outdir)) {
-    try {
-      fs.rmSync(outdir, { recursive: true, force: true });
-    } catch (e) {
-      // fallback for older Node versions
-      const rimraf = require('rimraf');
-      rimraf.sync(outdir);
-    }
-  }
-  fs.mkdirSync(outdir, { recursive: true });
+  try {
+    console.log('Building Saxon Scout app...');
 
-  // Bundle the app entry
-  await esbuild.build({
-    entryPoints: [path.resolve(__dirname, '../app/src/main.tsx')],
-    bundle: true,
-    outdir: outdir,
-    entryNames: 'bundle',
-    assetNames: 'assets/[name]',
-    minify: false,
-    sourcemap: true,
-    publicPath: '/',
-    platform: 'browser',
-    target: ['es2020'],
-    loader: { '.png': 'file' },
-    jsx: 'transform',
-    jsxFactory: 'Inferno.createVNode',
-    jsxFragment: 'Inferno.Fragment',
-    define: { 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development') }
-  });
-  
-  // Copy static index.html template (we will inject the watchdog below)
-  const indexHtml = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Saxon Scout</title>
-  <link rel="icon" type="image/x-icon" href="https://images.squarespace-cdn.com/content/v1/6885124a98afac55ac8d915a/71bd5040-7a7f-45e9-96ab-86406027e0dc/favicon.ico?format=100w">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <style>
-      body { 
-        background-color: #f8f9fa;
-        margin: 0;
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      }
-      .loading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 20px;
-      }
-      .loading-content {
-        text-align: center;
-        max-width: 400px;
-      }
-      .loading-title {
-        color: #1a73e8;
-        font-size: 2.5rem;
-        margin-bottom: 2rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-      }
-      .loading-spinner-group {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        margin: 2rem 0;
-      }
-      .loading-spinner {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        display: inline-block;
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-      .loading-spinner.primary {
-        background-color: #007bff;
-        animation-delay: 0s;
-      }
-      .loading-spinner.secondary {
-        background-color: #6c757d;
-        animation-delay: 0.2s;
-      }
-      .loading-spinner.success {
-        background-color: #28a745;
-        animation-delay: 0.4s;
-      }
-      .loading-message {
-        color: #6c757d;
-        font-size: 1.1rem;
-        margin-top: 1rem;
-        animation: fade 2s ease-in-out infinite;
-      }
-      .error { 
-        color: #dc3545;
-        margin: 20px;
-        padding: 20px;
-        border: 1px solid #dc3545;
-        border-radius: 8px;
-        background-color: #fff;
-        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.1);
-      }
-      @keyframes pulse {
-        0% {
-          transform: scale(0.8);
-          opacity: 0.5;
+    // Ensure dist directory exists
+    if (!fs.existsSync(distDir)) {
+      fs.mkdirSync(distDir, { recursive: true });
+      console.log(`Created directory: ${distDir}`);
+    }
+
+    // Build with esbuild
+    await esbuild.build({
+      entryPoints: [path.resolve(__dirname, '../app/src/main.tsx')],
+      outfile: path.resolve(distDir, 'app.js'),
+      bundle: true,
+      minify: !isDev,
+      sourcemap: isDev,
+      format: 'iife',
+      target: 'es2020',
+      loader: {
+        '.png': 'file',
+        '.jpg': 'file',
+        '.jpeg': 'file',
+        '.webp': 'file',
+        '.svg': 'file',
+        '.woff': 'file',
+        '.woff2': 'file',
+        '.ttf': 'file',
+        '.eot': 'file'
+      },
+      define: {
+        'process.env.NODE_ENV': isDev ? '"development"' : '"production"'
+      },
+      watch: isDev ? {
+        onRebuild(error, result) {
+          if (error) {
+            console.error('Build error:', error);
+          } else {
+            console.log('Rebuild complete');
+          }
         }
-        50% {
-          transform: scale(1.2);
-          opacity: 1;
-        }
-        100% {
-          transform: scale(0.8);
-          opacity: 0.5;
-        }
-      }
-      @keyframes fade {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 1; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root">
-      <div class="loading">
-        <div class="loading-content">
-          <h2 class="loading-title">Saxon Scout</h2>
-          <div class="loading-spinner-group">
-            <div class="loading-spinner primary"></div>
-            <div class="loading-spinner secondary"></div>
-            <div class="loading-spinner success"></div>
-          </div>
-          <p class="loading-message">Initializing scouting system...</p>
-        </div>
-      </div>
-    </div>
-    <script>
-      window.onerror = function(msg, url, lineNo, columnNo, error) {
-        document.getElementById('root').innerHTML = '<div class="error"><h3>JavaScript Error</h3><p>' + msg + '</p><p>Check browser console for details.</p></div>';
-        return false;
+      } : false
+    });
+
+    console.log('✓ TypeScript/JSX compiled successfully');
+
+    // Copy index.html
+    const indexHtmlSrc = path.resolve(__dirname, '../app/index.html');
+    const indexHtmlDist = path.resolve(distDir, 'index.html');
+    fs.copyFileSync(indexHtmlSrc, indexHtmlDist);
+    console.log('✓ Copied index.html');
+
+    // Copy PWA manifest
+    const manifestSrc = path.resolve(__dirname, '../app/public/manifest.json');
+    const manifestDist = path.resolve(distDir, 'manifest.json');
+    if (fs.existsSync(manifestSrc)) {
+      fs.copyFileSync(manifestSrc, manifestDist);
+      console.log('✓ Copied manifest.json');
+    } else {
+      console.warn('⚠ manifest.json not found at', manifestSrc);
+      // Create a default manifest
+      const defaultManifest = {
+        name: 'Saxon Scout',
+        short_name: 'Saxon Scout',
+        description: 'A local-first scouting platform for FRC events',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#0066cc',
+        orientation: 'portrait-primary',
+        scope: '/',
+        icons: [
+          {
+            src: '/app/assets/Logo+611.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          }
+        ]
       };
-    </script>
-  <script src="bundle.js"></script>
-  </body>
-</html>`;
-
-  // helpful message if the app bundle fails to mount within a few seconds.
-  // The browser-executed bundle will set `window.__saxon_app_ready = true` on
-  // successful mount; if that never happens we show guidance to the user.
-  const watchdog = `
-    <script>
-      (function(){
-        const WAIT_MS = 5000;
-        const root = document.getElementById('root');
-        const timer = setTimeout(function(){
-          try {
-            if (window.__saxon_app_ready) return;
-            if (!root) return;
-            const container = document.createElement('div');
-            container.className = 'error';
-            const h3 = document.createElement('h3'); h3.textContent = 'Application failed to start';
-            container.appendChild(h3);
-            const p1 = document.createElement('p'); p1.textContent = 'The frontend bundle did not initialize within ' + (WAIT_MS/1000) + 's.'; container.appendChild(p1);
-            const p2 = document.createElement('p'); p2.textContent = 'Open the browser console for errors. If you are using a browser without the File System Access API, some features may be unavailable.'; container.appendChild(p2);
-            const p3 = document.createElement('p');
-            const btnRetry = document.createElement('button'); btnRetry.id = 'saxon-retry'; btnRetry.className = 'btn btn-primary'; btnRetry.textContent = 'Reload';
-            const btnConsole = document.createElement('button'); btnConsole.id = 'saxon-open-console'; btnConsole.className = 'btn btn-secondary'; btnConsole.textContent = 'Show Console';
-            p3.appendChild(btnRetry); p3.appendChild(document.createTextNode(' ')); p3.appendChild(btnConsole);
-            container.appendChild(p3);
-            root.innerHTML = '';
-            root.appendChild(container);
-            btnRetry.onclick = function(){ location.reload(); };
-            btnConsole.onclick = function(){ alert('Open the developer console (F12) to view errors.'); };
-          } catch (e) { }
-        }, WAIT_MS);
-        const poll = setInterval(function(){ if (window.__saxon_app_ready) { clearTimeout(timer); clearInterval(poll); } }, 200);
-      })();
-    </script>
-  `;
-  // Inject the watchdog script before closing </body> so it runs if the
-  // bundle fails to mount. We keep the original indexHtml contents and
-  // append the watchdog just before the body close tag.
-  const finalHtml = indexHtml.replace('</body>', `${watchdog}\n  </body>`);
-  fs.writeFileSync(path.join(outdir, 'index.html'), finalHtml, 'utf8');
-
-  // esbuild emits assets (images) into the outdir when loader: {'.png':'file'}
-  // Keep a fallback: if there is no assets directory and there are source
-  // assets, copy them over. This should be rare.
-  const assetsSrc = path.resolve(__dirname, '../app/src/assets');
-  const assetsDest = path.join(outdir, 'assets');
-  if (!fs.existsSync(assetsDest) && fs.existsSync(assetsSrc)) {
-    fs.mkdirSync(assetsDest, { recursive: true });
-    for (const f of fs.readdirSync(assetsSrc)) {
-      fs.copyFileSync(path.join(assetsSrc, f), path.join(assetsDest, f));
+      fs.writeFileSync(manifestDist, JSON.stringify(defaultManifest, null, 2));
+      console.log('✓ Created default manifest.json');
     }
-  }
 
-  console.log('App build complete ->', outdir);
+    // Copy service worker
+    const swSrc = path.resolve(__dirname, '../app/public/service-worker.js');
+    const swDist = path.resolve(distDir, 'service-worker.js');
+    if (fs.existsSync(swSrc)) {
+      fs.copyFileSync(swSrc, swDist);
+      console.log('✓ Copied service-worker.js');
+    } else {
+      console.warn('⚠ service-worker.js not found at', swSrc);
+      // Create a minimal service worker
+      const minimalSW = `
+const CACHE_NAME = 'saxon-scout-v1';
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .catch(() => new Response('Offline', { status: 503 }))
+  );
+});
+`;
+      fs.writeFileSync(swDist, minimalSW);
+      console.log('✓ Created minimal service-worker.js');
+    }
+
+    // Copy browserconfig.xml
+    const browserconfigSrc = path.resolve(__dirname, '../app/public/browserconfig.xml');
+    const browserconfigDist = path.resolve(distDir, 'browserconfig.xml');
+    if (fs.existsSync(browserconfigSrc)) {
+      fs.copyFileSync(browserconfigSrc, browserconfigDist);
+      console.log('✓ Copied browserconfig.xml');
+    }
+
+    // Copy assets
+    const assetsSrc = path.resolve(__dirname, '../app/src/assets');
+    const assetsDist = path.resolve(distDir, 'app', 'assets');
+    if (fs.existsSync(assetsSrc)) {
+      copyDirRecursive(assetsSrc, assetsDist);
+      console.log('✓ Copied assets');
+    }
+
+    console.log('\n✅ Build completed successfully!');
+    console.log(`📦 Output directory: ${distDir}`);
+    
+    if (isDev) {
+      console.log('👀 Watching for changes...');
+    }
+
+  } catch (error) {
+    console.error('❌ Build failed:', error);
+    process.exit(1);
+  }
 }
 
-build().catch(err => { console.error(err); process.exit(1); });
+/**
+ * Recursively copy a directory
+ */
+function copyDirRecursive(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+
+  const files = fs.readdirSync(src);
+  files.forEach(file => {
+    const srcFile = path.join(src, file);
+    const destFile = path.join(dest, file);
+    const stat = fs.statSync(srcFile);
+
+    if (stat.isDirectory()) {
+      copyDirRecursive(srcFile, destFile);
+    } else {
+      fs.copyFileSync(srcFile, destFile);
+    }
+  });
+}
+
+// Run build
+build();
