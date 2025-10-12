@@ -4,6 +4,7 @@ import { useState, useEffect } from '../lib/inferno-hooks-shim';
 import type { DirHandle } from '../lib/fsStore';
 import { writeJSON } from '../lib/fsStore';
 import gamepieceUrl from '../assets/gamepiece.png';
+import { toast } from '../lib/toast';
 
 /**
  * Configuration for the grid of buttons. The grid maps each cell to a
@@ -250,8 +251,22 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
    * saving, a POST request is made to the server to log the creation event.
    */
   async function save() {
-    if (!root) return alert('Pick a data folder first');
-    if (!scouter) return alert('Please login before saving');
+    if (!root) {
+      toast.error('Please select a data folder first');
+      return;
+    }
+    if (!scouter) {
+      toast.error('Please login before saving');
+      return;
+    }
+    if (!team) {
+      toast.error('Please enter a team number');
+      return;
+    }
+    if (!game) {
+      toast.error('Please enter a match number');
+      return;
+    }
     // Compose filename and record
     const now = new Date();
     const isoForFilename = now.toISOString().replace(/[:.]/g, '');
@@ -293,7 +308,7 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename, filepath: 'matches/' + filename, name: scouter || 'unknown' })
       });
-      alert('Saved');
+      toast.success(`Match saved for Team ${team}`);
       // Reset stats and history for next match
       setStats({
         auto: { coral: { L1: 0, L2: 0, L3: 0, L4: 0 }, algae: { processor: 0, net: 0 }, mobility: false },
@@ -307,7 +322,7 @@ export default function QuickScout({ root, scouter }: { root: DirHandle | null; 
       setElapsed(0);
     } catch (err) {
       console.error(err);
-      alert('Failed to save match');
+      toast.error('Failed to save match. Please try again.');
     }
   }
 

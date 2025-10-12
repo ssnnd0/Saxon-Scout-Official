@@ -7,6 +7,8 @@ import InfoViewer from './InfoViewer';
 import PitScout from './PitScout';
 import Export from './Export';
 import Home from './Home';
+import Settings from './Settings';
+import { toast } from '../lib/toast';
 
 interface AppState {
   root: DirHandle | null;
@@ -141,7 +143,7 @@ export default class App extends Component<{}, AppState> {
       this.setState({ root: dir });
     } catch (err) {
       console.error('Directory picker failed:', err);
-      alert('Unable to access filesystem. Make sure your browser supports the File System Access API and that you grant permission.');
+      toast.error('Unable to access filesystem. Please grant permission and try again.');
     }
   }
 
@@ -275,6 +277,7 @@ export default class App extends Component<{}, AppState> {
           {root && scouter && view === 'pit' && <PitScout root={root} scouter={scouter} navigateHome={() => this.setView('home')} />}
           {root && scouter && view === 'info' && <InfoViewer root={root} />}
           {root && scouter && view === 'export' && <Export root={root} navigateHome={() => this.setView('home')} />}
+          {root && scouter && view === 'settings' && <Settings navigateHome={() => this.setView('home')} />}
         </main>
 
         <footer className="app-footer">

@@ -3,6 +3,7 @@ import * as Inferno from 'inferno';
 import { useState } from '../lib/inferno-hooks-shim';
 import type { DirHandle } from '../lib/fsStore';
 import JSZip from 'jszip';
+import { toast } from '../lib/toast';
 
 interface ExportProps {
   root: DirHandle | null;
@@ -37,10 +38,17 @@ export default function Export({ root, navigateHome }: ExportProps) {
 
   async function exportMatches() {
     setError(null);
-    if (!root) return setError('Pick a data folder first');
+    if (!root) {
+      toast.error('Please select a data folder first');
+      return;
+    }
+    toast.info('Generating match export...');
     try {
       const files = await readJsonFiles(root, 'matches');
-      if (!files.length) return setError('No matches to export');
+      if (!files.length) {
+        toast.warning('No matches to export');
+        return;
+      }
       // Compose CSV header and rows
       const headers = ['team','game','alliance','time','scouter','auto_scored','auto_missed','mobility','tele_cycles','tele_scored','tele_missed','fouls','endgame_state','comments'];
       const rows = [headers.join(',')];
@@ -72,18 +80,28 @@ export default function Export({ root, navigateHome }: ExportProps) {
       const blob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(blob);
       setMatchUrl(url);
+      toast.success(`Successfully exported ${files.length} matches`);
     } catch (err) {
       console.error(err);
-      setError('Failed to export matches');
+      const errorMsg = 'Failed to export matches';
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   }
 
   async function exportPit() {
     setError(null);
-    if (!root) return setError('Pick a data folder first');
+    if (!root) {
+      toast.error('Please select a data folder first');
+      return;
+    }
+    toast.info('Generating pit data export...');
     try {
       const files = await readJsonFiles(root, 'pit');
-      if (!files.length) return setError('No pit data to export');
+      if (!files.length) {
+        toast.warning('No pit data to export');
+        return;
+      }
       // CSV header and rows
       const headers = ['team','drivetrain','autoPaths','preferredZones','cycleTimeEst','climb','notes','scouter','time'];
       const rows = [headers.join(',')];
@@ -110,9 +128,12 @@ export default function Export({ root, navigateHome }: ExportProps) {
       const blob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(blob);
       setPitUrl(url);
+      toast.success(`Successfully exported ${files.length} pit records`);
     } catch (err) {
       console.error(err);
-      setError('Failed to export pit data');
+      const errorMsg = 'Failed to export pit data';
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   }
 

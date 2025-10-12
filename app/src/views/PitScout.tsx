@@ -3,6 +3,7 @@ import * as Inferno from 'inferno';
 import { useState } from '../lib/inferno-hooks-shim';
 import type { DirHandle } from '../lib/fsStore';
 import { writeJSON } from '../lib/fsStore';
+import { toast } from '../lib/toast';
 
 interface PitScoutProps {
   root: DirHandle | null;
@@ -35,9 +36,18 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
   }
 
   async function save() {
-    if (!root) return alert('Pick a data folder first');
-    if (!scouter) return alert('Please login before saving');
-    if (!team) return alert('Team number required');
+    if (!root) {
+      toast.error('Please select a data folder first');
+      return;
+    }
+    if (!scouter) {
+      toast.error('Please login before saving');
+      return;
+    }
+    if (!team) {
+      toast.error('Team number is required');
+      return;
+    }
     const now = new Date();
     const isoName = now.toISOString().replace(/[:.]/g, '');
     const filename = `team-${team}__pit__time-${isoName}.json`;
@@ -59,7 +69,7 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename, filepath: 'pit/' + filename, name: scouter || 'unknown' })
       });
-      alert('Pit scouting saved');
+      toast.success(`Pit scouting saved for Team ${team}`);
       // Reset form
       setDrivetrain('Tank');
       setAutoPaths([]);
@@ -70,7 +80,7 @@ export default function PitScout({ root, scouter, navigateHome }: PitScoutProps)
       setTeam(0);
     } catch (err) {
       console.error(err);
-      alert('Failed to save pit scouting');
+      toast.error('Failed to save pit scouting. Please try again.');
     }
   }
 
