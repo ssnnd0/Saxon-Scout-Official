@@ -2,21 +2,25 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "esnext",
-    "jsx": "preserve",
-    "jsxFactory": "Inferno.createVNode",
-    "jsxFragmentFactory": "Inferno.createFragment",
+    "jsx": "react-jsx",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowJs": true,
     "baseUrl": "./",
     "paths": {
       "*": ["node_modules/*"]
-    }
+    },
+    "typeRoots": ["../node_modules/@types", "./src/types"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "src/types/**/*"]
 }

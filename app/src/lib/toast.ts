@@ -1,153 +1,218 @@
-export type ToastType = 'success' | 'error' | 'info' | 'warning';
+// Toast notification system for Saxon Scout
+// Provides user feedback for actions like saving, errors, etc.
 
-export interface Toast {
-  id: string;
-  type: ToastType;
-  message: string;
+interface ToastOptions {
+  type?: 'success' | 'error' | 'warning' | 'info';
   duration?: number;
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
 }
 
-let toastContainer: HTMLElement | null = null;
+interface Toast {
+  id: string;
+  message: string;
+  type: ToastOptions['type'];
+  duration: number;
+  timestamp: number;
+}
 
-function getToastContainer(): HTMLElement {
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toast-container';
-    toastContainer.style.cssText = `
+class ToastManager {
+  private toasts: Toast[] = [];
+  private container: HTMLElement | null = null;
+  private listeners: ((toasts: Toast[]) => void)[] = [];
+
+  constructor() {
+    this.createContainer();
+  }
+
+  private createContainer() {
+    if (typeof document === 'undefined') return;
+    
+    this.container = document.createElement('div');
+    this.container.id = 'toast-container';
+    this.container.style.cssText = `
       position: fixed;
       top: 20px;
       right: 20px;
       z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-width: 400px;
+      pointer-events: none;
     `;
-    document.body.appendChild(toastContainer);
+    document.body.appendChild(this.container);
   }
-  return toastContainer;
-}
 
-function createToastElement(toast: Toast): HTMLElement {
-  const toastEl = document.createElement('div');
-  toastEl.id = `toast-${toast.id}`;
-  toastEl.className = `toast-item toast-${toast.type}`;
+  private generateId(): string {
+    return `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
 
-  const icons = {
-    success: 'fa-check-circle',
-    error: 'fa-exclamation-circle',
-    warning: 'fa-exclamation-triangle',
-    info: 'fa-info-circle'
-  };
+  private notifyListeners() {
+    this.listeners.forEach(listener => listener([...this.toasts]));
+  }
 
-  const colors = {
-    success: '#10b981',
-    error: '#ef4444',
-    warning: '#f59e0b',
-    info: '#3b82f6'
-  };
+  private createToastElement(toast: Toast): HTMLElement {
+    const element = document.createElement('div');
+    element.id = toast.id;
+    element.style.cssText = `
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      margin-bottom: 10px;
+      padding: 12px 16px;
+      min-width: 300px;
+      max-width: 400px;
+      pointer-events: auto;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+      border-left: 4px solid ${this.getTypeColor(toast.type)};
+    `;
 
-  toastEl.style.cssText = `
-    background: white;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 300px;
-    animation: slideIn 0.3s ease-out;
-    border-left: 4px solid ${colors[toast.type]};
-  `;
+    const icon = this.getTypeIcon(toast.type);
+    element.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <i class="fa ${icon}" style="color: ${this.getTypeColor(toast.type)}; font-size: 16px;"></i>
+        <span style="flex: 1; font-size: 14px; color: #333;">${toast.message}</span>
+        <button onclick="toastManager.remove('${toast.id}')" style="
+          background: none;
+          border: none;
+          color: #666;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 4px;
+          transition: background 0.2s;
+        " onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    `;
 
-  toastEl.innerHTML = `
-    <i class="fa ${icons[toast.type]}" style="color: ${colors[toast.type]}; font-size: 1.25rem;"></i>
-    <span style="flex: 1; color: #374151; font-weight: 500;">${toast.message}</span>
-    <button class="toast-close" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 1.25rem;">
-      <i class="fa fa-times"></i>
-    </button>
-  `;
-
-  const closeBtn = toastEl.querySelector('.toast-close');
-  closeBtn?.addEventListener('click', () => removeToast(toast.id));
-
-  return toastEl;
-}
-
-function removeToast(id: string) {
-  const toastEl = document.getElementById(`toast-${id}`);
-  if (toastEl) {
-    toastEl.style.animation = 'slideOut 0.3s ease-in';
+    // Animate in
     setTimeout(() => {
-      toastEl.remove();
-      if (toastContainer && toastContainer.children.length === 0) {
-        toastContainer.remove();
-        toastContainer = null;
+      element.style.transform = 'translateX(0)';
+    }, 10);
+
+    return element;
+  }
+
+  private getTypeColor(type: ToastOptions['type']): string {
+    switch (type) {
+      case 'success': return '#28a745';
+      case 'error': return '#dc3545';
+      case 'warning': return '#ffc107';
+      case 'info': return '#17a2b8';
+      default: return '#6c757d';
+    }
+  }
+
+  private getTypeIcon(type: ToastOptions['type']): string {
+    switch (type) {
+      case 'success': return 'fa-check-circle';
+      case 'error': return 'fa-exclamation-circle';
+      case 'warning': return 'fa-exclamation-triangle';
+      case 'info': return 'fa-info-circle';
+      default: return 'fa-bell';
+    }
+  }
+
+  show(message: string, options: ToastOptions = {}): string {
+    const toast: Toast = {
+      id: this.generateId(),
+      message,
+      type: options.type || 'info',
+      duration: options.duration || 5000,
+      timestamp: Date.now()
+    };
+
+    this.toasts.push(toast);
+    this.notifyListeners();
+
+    if (this.container) {
+      const element = this.createToastElement(toast);
+      this.container.appendChild(element);
+
+      // Auto remove
+      if (toast.duration > 0) {
+        setTimeout(() => {
+          this.remove(toast.id);
+        }, toast.duration);
       }
-    }, 300);
+    }
+
+    return toast.id;
+  }
+
+  remove(id: string) {
+    const index = this.toasts.findIndex(t => t.id === id);
+    if (index === -1) return;
+
+    this.toasts.splice(index, 1);
+    this.notifyListeners();
+
+    const element = document.getElementById(id);
+    if (element) {
+      element.style.transform = 'translateX(100%)';
+      element.style.opacity = '0';
+      setTimeout(() => {
+        element.remove();
+      }, 300);
+    }
+  }
+
+  clear() {
+    this.toasts.forEach(toast => {
+      const element = document.getElementById(toast.id);
+      if (element) {
+        element.style.transform = 'translateX(100%)';
+        element.style.opacity = '0';
+        setTimeout(() => {
+          element.remove();
+        }, 300);
+      }
+    });
+    this.toasts = [];
+    this.notifyListeners();
+  }
+
+  subscribe(listener: (toasts: Toast[]) => void) {
+    this.listeners.push(listener);
+    return () => {
+      const index = this.listeners.indexOf(listener);
+      if (index > -1) {
+        this.listeners.splice(index, 1);
+      }
+    };
+  }
+
+  // Convenience methods
+  success(message: string, duration?: number) {
+    return this.show(message, { type: 'success', duration });
+  }
+
+  error(message: string, duration?: number) {
+    return this.show(message, { type: 'error', duration: duration || 8000 });
+  }
+
+  warning(message: string, duration?: number) {
+    return this.show(message, { type: 'warning', duration });
+  }
+
+  info(message: string, duration?: number) {
+    return this.show(message, { type: 'info', duration });
   }
 }
 
-export function showToast(type: ToastType, message: string, duration: number = 4000): string {
-  const id = `${Date.now()}-${Math.random()}`;
-  const toast: Toast = { id, type, message, duration };
+// Create global instance
+const toastManager = new ToastManager();
 
-  const container = getToastContainer();
-  const toastEl = createToastElement(toast);
-  container.appendChild(toastEl);
-
-  if (duration > 0) {
-    setTimeout(() => removeToast(id), duration);
-  }
-
-  return id;
+// Make it available globally for inline event handlers
+if (typeof window !== 'undefined') {
+  (window as any).toastManager = toastManager;
 }
 
 export const toast = {
-  success: (message: string, duration?: number) => showToast('success', message, duration),
-  error: (message: string, duration?: number) => showToast('error', message, duration),
-  warning: (message: string, duration?: number) => showToast('warning', message, duration),
-  info: (message: string, duration?: number) => showToast('info', message, duration)
+  show: (message: string, options?: ToastOptions) => toastManager.show(message, options),
+  success: (message: string, duration?: number) => toastManager.success(message, duration),
+  error: (message: string, duration?: number) => toastManager.error(message, duration),
+  warning: (message: string, duration?: number) => toastManager.warning(message, duration),
+  info: (message: string, duration?: number) => toastManager.info(message, duration),
+  remove: (id: string) => toastManager.remove(id),
+  clear: () => toastManager.clear(),
+  subscribe: (listener: (toasts: Toast[]) => void) => toastManager.subscribe(listener)
 };
-
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from {
-      transform: translateX(400px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideOut {
-    from {
-      transform: translateX(0);
-      opacity: 1;
-    }
-    to {
-      transform: translateX(400px);
-      opacity: 0;
-    }
-  }
-
-  .toast-close:hover {
-    color: #374151 !important;
-  }
-
-  @media (max-width: 576px) {
-    #toast-container {
-      right: 10px;
-      left: 10px;
-      max-width: none;
-    }
-
-    .toast-item {
-      min-width: 0 !important;
-    }
-  }
-`;
-document.head.appendChild(style);

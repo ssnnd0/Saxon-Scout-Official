@@ -1,8 +1,9 @@
-// Saxon Scout Service Worker for PWA functionality
-const CACHE_NAME = 'saxon-scout-v1';
+const CACHE_NAME = 'saxon-scout-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
+  '/app.css',
+  '/app.js',
   '/app/assets/Logo+611.png',
   '/app/assets/Logo+611+Black+Name.webp',
   '/app/assets/Logo+611+White+Name.webp',
@@ -67,12 +68,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets: cache-first
+  // JS/CSS: network-first to avoid stale bundles; fall back to cache when offline
+  if (
+    request.method === 'GET' &&
+    (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))
+  ) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.status === 200) {
+            const cacheCopy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, cacheCopy);
+            });
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || offlineResponse()))
+    );
+    return;
+  }
+
+  // Static assets (images, icons): cache-first
   if (
     request.method === 'GET' &&
     (url.pathname.startsWith('/app/') ||
-     url.pathname.endsWith('.js') ||
-     url.pathname.endsWith('.css') ||
      url.pathname.endsWith('.png') ||
      url.pathname.endsWith('.webp') ||
      url.pathname.endsWith('.jpg') ||
@@ -146,24 +166,24 @@ function offlineResponse() {
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg,rgb(17, 70, 150) 0%,rgb(194, 168, 23) 100%);
           }
           .offline-container {
             text-align: center;
             background: white;
             padding: 2rem;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(255, 0, 0, 0.57);
             max-width: 400px;
           }
-          h1 { color: #0066cc; margin-top: 0; }
+          h1 { color:rgb(155, 140, 7); margin-top: 0; }
           p { color: #666; line-height: 1.6; }
           .icon { font-size: 3rem; margin-bottom: 1rem; }
         </style>
       </head>
       <body>
         <div class="offline-container">
-          <div class="icon">📡</div>
+          <div class="icon">Θ/div>
           <h1>Offline Mode</h1>
           <p>Saxon Scout is currently offline. Your local data is saved and will sync when you're back online.</p>
           <p>You can continue using cached features.</p>

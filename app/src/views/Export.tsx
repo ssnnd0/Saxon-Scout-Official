@@ -1,8 +1,6 @@
-// @ts-nocheck
-import * as Inferno from 'inferno';
-import { Component } from 'inferno';
-import type { DirHandle } from '../lib/fsStore';
+import React, { Component } from 'react';
 import JSZip from 'jszip';
+import type { DirHandle } from '../lib/fsStore';
 
 interface ExportProps {
   root: DirHandle | null;
@@ -17,26 +15,25 @@ interface ExportState {
 }
 
 async function readJsonFiles(root: DirHandle, subdir: string): Promise<Array<{ name: string; obj: any; text: string }>> {
-  const out: Array<{ name: string; obj: any; text: string }> = [];
+  const files: Array<{ name: string; obj: any; text: string }> = [];
   try {
     const dir = await root.getDirectoryHandle(subdir);
-    // @ts-ignore
     for await (const [name, handle] of dir.entries()) {
-      if (!name.endsWith('.json')) continue;
-      const file = await (handle as FileSystemFileHandle).getFile();
-      const text = await file.text();
-      let obj: any = undefined;
-      try {
-        obj = JSON.parse(text);
-      } catch (e) {
-        console.warn('Failed to parse', name);
+      if (name.endsWith('.json')) {
+        try {
+          const file = await handle.getFile();
+          const text = await file.text();
+          const obj = JSON.parse(text);
+          files.push({ name, obj, text });
+        } catch (err) {
+          console.warn(`Failed to read ${name}:`, err);
+        }
       }
-      out.push({ name, obj, text });
     }
   } catch (err) {
-    console.error('Error reading files from', subdir, err);
+    console.warn(`Failed to read ${subdir} directory:`, err);
   }
-  return out;
+  return files;
 }
 
 export default class Export extends Component<ExportProps, ExportState> {
@@ -51,114 +48,101 @@ export default class Export extends Component<ExportProps, ExportState> {
   }
 
   exportMatches = async () => {
-    this.setState({ error: null, loading: true });
     const { root } = this.props;
     if (!root) {
-      this.setState({ error: 'Pick a data folder first', loading: false });
+      this.setState({ error: 'No data folder selected' });
       return;
     }
+
+    this.setState({ loading: true, error: null });
+
     try {
       const files = await readJsonFiles(root, 'matches');
-      if (!files.length) {
-        this.setState({ error: 'No matches to export', loading: false });
+      if (files.length === 0) {
+        this.setState({ error: 'No match data found', loading: false });
         return;
       }
 
-      const headers = [
-        'team', 'game', 'alliance', 'time', 'scouter', 
-        'auto_scored', 'auto_missed', 'mobility', 
-        'tele_cycles', 'tele_scored', 'tele_missed', 
-        'fouls', 'endgame_state', 'comments'
-      ];
-      const rows = [headers.join(',')];
-
-      files.forEach(({ obj }) => {
-        if (!obj) return;
-        const team = obj.team ?? '';
-        const game = obj.game ?? '';
-        const alliance = obj.alliance ?? '';
-        const time = obj.time ?? '';
-        const scouter = obj.scouter ?? '';
-        const auto_scored = obj.phase?.auto?.scored ?? '';
-        const auto_missed = obj.phase?.auto?.missed ?? '';
-        const mobility = obj.phase?.auto?.mobility ? 'Y' : 'N';
-        const tele_cycles = obj.phase?.teleop?.cycles ?? '';
-        const tele_scored = obj.phase?.teleop?.scored ?? '';
-        const tele_missed = obj.phase?.teleop?.missed ?? '';
-        const fouls = obj.fouls ?? '';
-        const endgame_state = 
-          obj.endgame?.climb && obj.endgame.climb !== 'none' 
-            ? obj.endgame.climb 
-            : obj.endgame?.park 
-            ? 'park' 
-            : 'none';
-        const comments = obj.comments ? '"' + obj.comments.replace(/"/g, '""') + '"' : '';
-        
-        rows.push([
-          team, game, alliance, time, scouter, 
-          auto_scored, auto_missed, mobility, 
-          tele_cycles, tele_scored, tele_missed, 
-          fouls, endgame_state, comments
-        ].join(','));
-      });
-
-      const csv = rows.join('\n');
-      const zip = new JSZip();
+      // Create CSV content
+      const headers = ['Team', 'Match', 'Alliance', 'Time', 'Scouter', 'Auto Score', 'Auto Miss', 'Auto Mobility', 'Teleop Cycles', 'Teleop Score', 'Teleop Miss', 'Endgame Park', 'Endgame Climb', 'Fouls'];
+      const csvRows = [headers.join(',')];
       
-      files.forEach(({ name, text }) => {
-        zip.file('matches/' + name, text);
+      files.forEach(file => {
+        const { obj } = file;
+        const row = [
+          obj.team || '',
+          obj.game || '',
+          obj.alliance || '',
+          obj.time || '',
+          obj.scouter || '',
+          obj.phase?.auto?.scored || 0,
+          obj.phase?.auto?.missed || 0,
+          obj.phase?.auto?.mobility ? 'Yes' : 'No',
+          obj.phase?.teleop?.cycles || 0,
+          obj.phase?.teleop?.scored || 0,
+          obj.phase?.teleop?.missed || 0,
+          obj.endgame?.park ? 'Yes' : 'No',
+          obj.endgame?.climb || 'none',
+          obj.fouls || 0
+        ];
+        csvRows.push(row.join(','));
       });
-      zip.file('matches.csv', csv);
 
-      const blob = await zip.generateAsync({ type: 'blob' });
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       this.setState({ matchUrl: url, loading: false });
     } catch (err) {
       console.error(err);
-      this.setState({ error: 'Failed to export matches', loading: false });
+      this.setState({ error: 'Failed to export match data', loading: false });
     }
   }
 
   exportPit = async () => {
-    this.setState({ error: null, loading: true });
     const { root } = this.props;
     if (!root) {
-      this.setState({ error: 'Pick a data folder first', loading: false });
+      this.setState({ error: 'No data folder selected' });
       return;
     }
+
+    this.setState({ loading: true, error: null });
+
     try {
       const files = await readJsonFiles(root, 'pit');
-      if (!files.length) {
-        this.setState({ error: 'No pit data to export', loading: false });
+      if (files.length === 0) {
+        this.setState({ error: 'No pit data found', loading: false });
         return;
       }
 
-      const headers = ['team', 'drivetrain', 'autoPaths', 'preferredZones', 'cycleTimeEst', 'climb', 'notes', 'scouter', 'time'];
-      const rows = [headers.join(',')];
-
-      files.forEach(({ obj }) => {
-        if (!obj) return;
-        const team = obj.team ?? '';
-        const drivetrain = obj.drivetrain ?? '';
-        const autoPaths = Array.isArray(obj.autoPaths) ? obj.autoPaths.join('|') : '';
-        const zones = Array.isArray(obj.preferredZones) ? obj.preferredZones.join('|') : '';
-        const cycle = obj.cycleTimeEst ?? '';
-        const climb = obj.climb ? 'Y' : 'N';
-        let notes = obj.notes ?? '';
-        notes = notes ? '"' + notes.replace(/"/g, '""') + '"' : '';
-        const scouter = obj.scouter ?? '';
-        const time = obj.time ?? '';
-        
-        rows.push([team, drivetrain, autoPaths, zones, cycle, climb, notes, scouter, time].join(','));
-      });
-
-      const csv = rows.join('\n');
       const zip = new JSZip();
       
-      files.forEach(({ name, text }) => {
-        zip.file('pit/' + name, text);
+      // Add individual JSON files
+      files.forEach(file => {
+        zip.file(file.name, file.text);
       });
-      zip.file('pit.csv', csv);
+
+      // Create summary CSV
+      const headers = ['Team', 'Drivetrain', 'Auto Paths', 'Preferred Zones', 'Cycle Time', 'Can Climb', 'Notes', 'Scouter', 'Time'];
+      const csvRows = [headers.join(',')];
+      
+      files.forEach(file => {
+        const { obj } = file;
+        const row = [
+          obj.team || '',
+          obj.drivetrain || '',
+          (obj.autoPaths || []).join(';'),
+          (obj.zones || []).join(';'),
+          obj.cycleTime || '',
+          obj.canClimb ? 'Yes' : 'No',
+          (obj.notes || '').replace(/,/g, ';'),
+          obj.scouter || '',
+          obj.time || ''
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = csvRows.join('\n');
+      zip.file('pit_summary.csv', csvContent);
 
       const blob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(blob);
@@ -174,159 +158,214 @@ export default class Export extends Component<ExportProps, ExportState> {
     const { matchUrl, pitUrl, error, loading } = this.state;
 
     return (
-      <div className="card-modern card">
-        <div className="card-body">
-          <div className="d-flex align-items-center justify-content-between mb-4">
-            <div>
-              <h4 className="mb-1 fw-bold">
-                <i className="fa fa-file-archive me-2 text-warning"></i>
-                Export Data
-              </h4>
-              <p className="text-muted mb-0 small">Download your scouting data for analysis and sharing</p>
+      <div className="saxon-hero">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="saxon-card">
+            {/* Saxon Header */}
+            <div className="saxon-card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="saxon-module-icon text-3xl">
+                    <i className="fa fa-download"></i>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-saxon-black">SUPPLY LOGISTICS</h1>
+                    <p className="text-saxon-gold-dark">Export scouting data for analysis</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="saxon-badge">CSV/JSON</span>
+                  <button className="saxon-btn-outline" onClick={navigateHome}>
+                    <i className="fa fa-arrow-left mr-2"></i>
+                    Back
+                  </button>
+                </div>
+              </div>
             </div>
-            <button className="btn btn-outline-secondary" onClick={navigateHome}>
-              <i className="fa fa-arrow-left me-2"></i>
-              Back
-            </button>
-          </div>
 
-          {error && (
-            <div className="alert alert-danger d-flex align-items-center gap-2 mb-3" role="alert">
-              <i className="fa fa-exclamation-circle"></i>
-              <span>{error}</span>
-            </div>
-          )}
-
-          <div className="row g-3">
-            <div className="col-md-6">
-              <div className="card h-100 border-primary" style={{ borderTopWidth: '3px', borderTopStyle: 'solid' }}>
-                <div className="card-body d-flex flex-column">
-                  <div className="d-flex align-items-center mb-3">
-                    <div 
-                      className="export-icon-wrapper bg-primary bg-opacity-10 text-primary me-3"
-                      style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.75rem'
-                      }}
-                    >
-                      <i className="fa fa-gamepad"></i>
-                    </div>
+            <div className="saxon-card-body">
+              {error && (
+                <div className="saxon-alert saxon-alert-error mb-6">
+                  <div className="flex items-center">
+                    <i className="fa fa-exclamation-triangle mr-4 text-2xl"></i>
                     <div>
-                      <h5 className="mb-0 fw-bold">Match Data</h5>
-                      <small className="text-muted">All scouted match records</small>
+                      <strong>Error:</strong> {error}
                     </div>
                   </div>
-                  <p className="small text-muted mb-3">
-                    Export all match scouting data including autonomous, teleop, endgame scores, and more. Includes both JSON files and a CSV summary for spreadsheet analysis.
-                  </p>
-                  <div className="mt-auto">
-                    {!matchUrl ? (
+                </div>
+              )}
+
+              <div className="saxon-grid-2 gap-8">
+                {/* Match Data Export */}
+                <div className="saxon-card bg-saxon-gold-light">
+                  <div className="saxon-card-body">
+                    <div className="text-center mb-6">
+                      <div className="saxon-module-icon text-4xl mx-auto mb-4">
+                        <i className="fa fa-gamepad"></i>
+                      </div>
+                      <h3 className="font-bold text-saxon-black mb-2">MATCH DATA EXPORT</h3>
+                      <p className="text-saxon-gold-dark">Export match scouting data as CSV</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-white p-4 rounded-xl border-2 border-saxon-gold">
+                        <h4 className="font-bold text-saxon-black mb-2">Export Format:</h4>
+                        <ul className="text-sm text-saxon-gold-dark space-y-1">
+                          <li>• Team number and match information</li>
+                          <li>• Autonomous and teleoperated scores</li>
+                          <li>• Endgame capabilities and fouls</li>
+                          <li>• Scouter attribution and timestamps</li>
+                        </ul>
+                      </div>
+
                       <button
-                        className="btn btn-primary w-100"
+                        className="saxon-btn w-full text-lg py-4"
                         onClick={this.exportMatches}
                         disabled={loading}
                       >
-                        <i className="fa fa-file-archive me-2"></i>
-                        {loading ? 'Generating...' : 'Generate Match Export'}
+                        {loading ? (
+                          <>
+                            <i className="fa fa-spinner fa-spin mr-3"></i>
+                            PROCESSING...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa fa-download mr-3"></i>
+                            EXPORT MATCH DATA
+                          </>
+                        )}
                       </button>
-                    ) : (
-                      <div className="d-grid gap-2">
-                        <a
-                          className="btn btn-success w-100"
-                          href={matchUrl}
-                          download="matches_export.zip"
-                        >
-                          <i className="fa fa-download me-2"></i>
-                          Download Matches ZIP
-                        </a>
-                        <button
-                          className="btn btn-outline-primary btn-sm w-100"
-                          onClick={() => this.setState({ matchUrl: null })}
-                        >
-                          <i className="fa fa-redo me-2"></i>
-                          Generate New Export
-                        </button>
-                      </div>
-                    )}
+
+                      {matchUrl && (
+                        <div className="saxon-alert saxon-alert-success">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <i className="fa fa-check-circle mr-4 text-2xl"></i>
+                              <div>
+                                <strong>Export Ready:</strong> Match data has been processed
+                              </div>
+                            </div>
+                            <a
+                              href={matchUrl}
+                              download="saxon_scout_matches.csv"
+                              className="saxon-btn-outline"
+                            >
+                              <i className="fa fa-download mr-2"></i>
+                              Download CSV
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="col-md-6">
-              <div className="card h-100 border-success" style={{ borderTopWidth: '3px', borderTopStyle: 'solid', borderTopColor: '#28a745' }}>
-                <div className="card-body d-flex flex-column">
-                  <div className="d-flex align-items-center mb-3">
-                    <div 
-                      className="export-icon-wrapper bg-success bg-opacity-10 text-success me-3"
-                      style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.75rem'
-                      }}
-                    >
-                      <i className="fa fa-tools"></i>
+                {/* Pit Data Export */}
+                <div className="saxon-card bg-saxon-gold-light">
+                  <div className="saxon-card-body">
+                    <div className="text-center mb-6">
+                      <div className="saxon-module-icon text-4xl mx-auto mb-4">
+                        <i className="fa fa-robot"></i>
+                      </div>
+                      <h3 className="font-bold text-saxon-black mb-2">PIT DATA EXPORT</h3>
+                      <p className="text-saxon-gold-dark">Export pit scouting data as ZIP</p>
                     </div>
-                    <div>
-                      <h5 className="mb-0 fw-bold">Pit Data</h5>
-                      <small className="text-muted">Robot capability records</small>
-                    </div>
-                  </div>
-                  <p className="small text-muted mb-3">
-                    Export all pit scouting data including drivetrain types, autonomous paths, preferred zones, and robot capabilities. Includes both JSON files and a CSV summary.
-                  </p>
-                  <div className="mt-auto">
-                    {!pitUrl ? (
+
+                    <div className="space-y-4">
+                      <div className="bg-white p-4 rounded-xl border-2 border-saxon-gold">
+                        <h4 className="font-bold text-saxon-black mb-2">Export Format:</h4>
+                        <ul className="text-sm text-saxon-gold-dark space-y-1">
+                          <li>• Robot capabilities and drivetrain</li>
+                          <li>• Autonomous paths and preferred zones</li>
+                          <li>• Cycle time estimates and climb ability</li>
+                          <li>• Strategic notes and observations</li>
+                        </ul>
+                      </div>
+
                       <button
-                        className="btn btn-success w-100"
+                        className="saxon-btn w-full text-lg py-4"
                         onClick={this.exportPit}
                         disabled={loading}
                       >
-                        <i className="fa fa-file-archive me-2"></i>
-                        {loading ? 'Generating...' : 'Generate Pit Export'}
+                        {loading ? (
+                          <>
+                            <i className="fa fa-spinner fa-spin mr-3"></i>
+                            PROCESSING...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa fa-download mr-3"></i>
+                            EXPORT PIT DATA
+                          </>
+                        )}
                       </button>
-                    ) : (
-                      <div className="d-grid gap-2">
-                        <a
-                          className="btn btn-success w-100"
-                          href={pitUrl}
-                          download="pit_export.zip"
-                        >
-                          <i className="fa fa-download me-2"></i>
-                          Download Pit ZIP
-                        </a>
-                        <button
-                          className="btn btn-outline-success btn-sm w-100"
-                          onClick={() => this.setState({ pitUrl: null })}
-                        >
-                          <i className="fa fa-redo me-2"></i>
-                          Generate New Export
-                        </button>
-                      </div>
-                    )}
+
+                      {pitUrl && (
+                        <div className="saxon-alert saxon-alert-success">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <i className="fa fa-check-circle mr-4 text-2xl"></i>
+                              <div>
+                                <strong>Export Ready:</strong> Pit data has been processed
+                              </div>
+                            </div>
+                            <a
+                              href={pitUrl}
+                              download="saxon_scout_pit.zip"
+                              className="saxon-btn-outline"
+                            >
+                              <i className="fa fa-download mr-2"></i>
+                              Download ZIP
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Export Instructions */}
+              <div className="saxon-card bg-saxon-gold-light mt-6">
+                <div className="saxon-card-body">
+                  <h3 className="font-bold text-saxon-black mb-4">
+                    <i className="fa fa-info-circle mr-2"></i>
+                    EXPORT INSTRUCTIONS
+                  </h3>
+                  <div className="saxon-grid-2">
+                    <div>
+                      <h4 className="font-bold text-saxon-black mb-2">Match Data (CSV)</h4>
+                      <ul className="text-sm text-saxon-gold-dark space-y-1">
+                        <li>• Compatible with Excel and Google Sheets</li>
+                        <li>• Includes all match scoring data</li>
+                        <li>• Perfect for statistical analysis</li>
+                        <li>• Can be imported into other tools</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-saxon-black mb-2">Pit Data (ZIP)</h4>
+                      <ul className="text-sm text-saxon-gold-dark space-y-1">
+                        <li>• Contains individual JSON files</li>
+                        <li>• Includes summary CSV for analysis</li>
+                        <li>• Preserves all detailed information</li>
+                        <li>• Easy to share with alliance partners</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="alert alert-info mt-4 d-flex align-items-start gap-2">
-            <i className="fa fa-info-circle mt-1"></i>
-            <div className="small">
-              <strong>Export Format:</strong> Each export contains a ZIP file with:
-              <ul className="mb-0 mt-2">
-                <li>Individual JSON files for each record</li>
-                <li>A consolidated CSV file for spreadsheet analysis</li>
-              </ul>
+            {/* Saxon Footer */}
+            <div className="saxon-card-footer">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-saxon-gold-dark">
+                  <strong>SUPPLY LOGISTICS MODULE</strong> • Team 611 Saxon Robotics
+                </div>
+                <div className="text-sm text-saxon-black">
+                  FRC 2025 REEFSCAPE
+                </div>
+              </div>
             </div>
           </div>
         </div>

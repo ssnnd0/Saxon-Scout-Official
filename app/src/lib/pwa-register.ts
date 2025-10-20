@@ -92,7 +92,7 @@ export function isPWAInstallable(): boolean {
     'serviceWorker' in navigator &&
     'caches' in window &&
     'indexedDB' in window &&
-    'FileSystemAccessAPI' in window
+    'showDirectoryPicker' in window
   );
 }
 

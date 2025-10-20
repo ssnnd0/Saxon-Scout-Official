@@ -5,9 +5,14 @@
  * Compiles TypeScript/JSX with esbuild and copies PWA assets
  */
 
-const esbuild = require('esbuild');
-const path = require('path');
-const fs = require('fs');
+import esbuild from 'esbuild';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isDev = process.argv.includes('--dev');
 const distDir = path.resolve(__dirname, '../dist/app');
@@ -22,8 +27,16 @@ async function build() {
       console.log(`Created directory: ${distDir}`);
     }
 
-    // Build with esbuild
-    await esbuild.build({
+    // Copy CSS file
+    console.log('Copying CSS...');
+    fs.copyFileSync(
+      path.resolve(__dirname, '../app/src/styles/theme.css'),
+      path.resolve(distDir, 'app.css')
+    );
+    console.log('✓ CSS copied successfully');
+
+    // Build configuration
+    const buildConfig = {
       entryPoints: [path.resolve(__dirname, '../app/src/main.tsx')],
       outfile: path.resolve(distDir, 'app.js'),
       bundle: true,
@@ -31,6 +44,8 @@ async function build() {
       sourcemap: isDev,
       format: 'iife',
       target: 'es2020',
+      jsxFactory: 'React.createElement',
+      jsxFragment: 'React.Fragment',
       loader: {
         '.png': 'file',
         '.jpg': 'file',
@@ -40,23 +55,25 @@ async function build() {
         '.woff': 'file',
         '.woff2': 'file',
         '.ttf': 'file',
-        '.eot': 'file'
+        '.eot': 'file',
+        '.css': 'css'
       },
       define: {
-        'process.env.NODE_ENV': isDev ? '"development"' : '"production"'
-      },
-      watch: isDev ? {
-        onRebuild(error, result) {
-          if (error) {
-            console.error('Build error:', error);
-          } else {
-            console.log('Rebuild complete');
-          }
-        }
-      } : false
-    });
+        'process.env.NODE_ENV': isDev ? '"development"' : '"production"',
+        'process.env': '{"NODE_ENV":"' + (isDev ? 'development' : 'production') + '"}',
+        'process': '{"env":{"NODE_ENV":"' + (isDev ? 'development' : 'production') + '"}}'
+      }
+    };
 
-    console.log('✓ TypeScript/JSX compiled successfully');
+    // Build with esbuild (use context for watch mode)
+    if (isDev) {
+      const ctx = await esbuild.context(buildConfig);
+      await ctx.watch();
+      console.log('✓ Initial build complete, watching for changes...');
+    } else {
+      await esbuild.build(buildConfig);
+      console.log('✓ TypeScript/JSX compiled successfully');
+    }
 
     // Copy index.html
     const indexHtmlSrc = path.resolve(__dirname, '../app/index.html');
@@ -127,12 +144,18 @@ self.addEventListener('fetch', (event) => {
       console.log('✓ Created minimal service-worker.js');
     }
 
-    // Copy browserconfig.xml
-    const browserconfigSrc = path.resolve(__dirname, '../app/public/browserconfig.xml');
+    // Copy browserconfig.xml (from app/public or project root)
     const browserconfigDist = path.resolve(distDir, 'browserconfig.xml');
-    if (fs.existsSync(browserconfigSrc)) {
-      fs.copyFileSync(browserconfigSrc, browserconfigDist);
-      console.log('✓ Copied browserconfig.xml');
+    const browserconfigCandidates = [
+      path.resolve(__dirname, '../app/public/browserconfig.xml'),
+      path.resolve(__dirname, '../browserconfig.xml')
+    ];
+    for (const src of browserconfigCandidates) {
+      if (fs.existsSync(src)) {
+        fs.copyFileSync(src, browserconfigDist);
+        console.log('✓ Copied browserconfig.xml');
+        break;
+      }
     }
 
     // Copy assets

@@ -31,23 +31,75 @@
 
 # Saxon Scout
 
-Saxon Scout is a modern scouting system for the FIRST Robotics Competition (FRC) 2026 season. The project provides tools for collecting, analyzing, and exporting match and pit scouting data. It is intended for teams that require a lightweight, local-first web application for competition use.
+**Professional FRC Scouting System for Team 611 Saxon Robotics**
 
-## Key Features
-- Quick match scouting with an intuitive 3x3 grid interface
-- Detailed pit scouting for robot capabilities
-- Data visualization and analytics using charts
-- Export to CSV and ZIP formats
-- Local storage via the File System Access API
-- Browser-based UI; no installation required
+Saxon Scout is a comprehensive, enterprise-grade scouting platform for the FIRST Robotics Competition (FRC) 2025 REEFSCAPE season. Built with modern web technologies, it provides powerful tools for match scouting, pit scouting, alliance selection, match planning, and strategic analysis.
 
-## Technology Stack
+## ⚡ Quick Start
 
-Frontend
-- Inferno.js
-- Bootstrap 5
-- TypeScript
-- esbuild
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/Saxon-Scout-Official.git
+cd Saxon-Scout-Official
+
+# 2. Install dependencies
+npm install
+
+# 3. Run interactive setup (creates .env file)
+npm run setup
+
+# 4. Build the application
+npm run build
+
+# 5. Start the server
+npm start
+```
+
+Open `http://localhost:8787` in your browser!
+
+## ✨ Key Features
+
+### Core Scouting
+- **Match Scouting**: Rapid data collection with intuitive interface
+- **Pit Scouting**: Robot capability assessment with photo uploads
+- **Data Analysis**: Interactive charts and performance visualizations
+- **Export Tools**: CSV and ZIP export for data sharing
+
+### Advanced Features
+- **Alliance Selection**: AI-powered team recommendations with composite scoring
+- **Match Planning**: Strategy builder with role assignment
+- **Event Schedule**: Integration with The Blue Alliance API
+- **Analytics Dashboard**: Scouter performance and accuracy metrics
+- **AI Insights**: Google Gemini AI-powered strategic analysis
+
+### Authentication & Admin
+- **OAuth Integration**: Google Sign-In support
+- **User Management**: Admin portal with role-based access
+- **Session Management**: Secure JWT-based authentication
+- **Admin Dashboard**: User administration and system monitoring
+
+## 🛠️ Technology Stack
+
+### Frontend
+- React 18 with TypeScript
+- React Router for navigation
+- Chart.js for data visualization
+- Bootstrap 5 for UI components
+- Professional design system with light/dark mode
+
+### Backend
+- Node.js with Express
+- PostgreSQL for data persistence
+- Passport.js for authentication
+- Google OAuth 2.0
+- JWT for session management
+- Multer for file uploads
+
+### APIs & Integrations
+- The Blue Alliance API
+- FIRST API
+- Google Gemini AI
+- Google OAuth 2.0
 
 Backend
 - Express.js

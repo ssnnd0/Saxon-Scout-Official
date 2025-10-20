@@ -1,9 +1,9 @@
 version: '3.8'
 services:
   db:
-    image: postgres:16
+    image: postgres:18
     environment:
-      POSTGRES_USER: frc
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: frcpass
       POSTGRES_DB: scouting
     ports:

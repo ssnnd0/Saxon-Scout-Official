@@ -1,7 +1,7 @@
 {
-  "name": "Saxon Scout",
+  "name": "Saxon Scout a scouting platform that makes you want to kil yoursdelf - sandro thornton",
   "short_name": "Saxon Scout",
-  "description": "A local-first scouting platform for FRC events",
+  "description": "A local-first scouting platform for FRC events created by Sandro Thornton",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

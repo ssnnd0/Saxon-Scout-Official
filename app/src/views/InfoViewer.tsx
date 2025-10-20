@@ -1,8 +1,7 @@
-// @ts-nocheck
-import * as Inferno from 'inferno';
-import { Component } from 'inferno';
+import React, { Component } from 'react';
 import Chart from 'chart.js/auto';
 import type { DirHandle } from '../lib/fsStore';
+
 
 interface InfoViewerProps {
   root: DirHandle | null;
@@ -28,64 +27,69 @@ interface SummaryEntry {
 }
 
 async function readAllMatches(root: DirHandle): Promise<any[]> {
+  const matches: any[] = [];
   try {
-    const matchesDir = await root.getDirectoryHandle('matches');
-    const out: any[] = [];
-    // @ts-ignore
-    for await (const [name, handle] of matchesDir.entries()) {
-      if (typeof name === 'string' && name.endsWith('.json')) {
-        const fileHandle = handle as FileSystemFileHandle;
-        const file = await fileHandle.getFile();
-        const text = await file.text();
-        try {
-          out.push(JSON.parse(text));
-        } catch (err) {
-          console.warn('Failed to parse', name, err);
+    const matchesDir = await root.getDirectoryHandle('matches', { create: false });
+    // Type assertion for FileSystemDirectoryHandle which has entries()
+    const dirHandle = matchesDir as any;
+    if (dirHandle.entries) {
+      for await (const [name, handle] of dirHandle.entries()) {
+        if (name.endsWith('.json')) {
+          try {
+            const file = await handle.getFile();
+            const text = await file.text();
+            const data = JSON.parse(text);
+            matches.push(data);
+          } catch (err) {
+            console.warn(`Failed to read ${name}:`, err);
+          }
         }
       }
     }
-    return out;
   } catch (err) {
-    console.error(err);
-    return [];
+    console.warn('Failed to read matches directory:', err);
   }
+  return matches;
 }
 
 function summarise(records: any[]): SummaryEntry[] {
-  const map = new Map<number, SummaryEntry>();
+  const teamMap = new Map<number, any[]>();
   
-  for (const rec of records) {
-    const t = rec.team;
-    if (!map.has(t)) {
-      map.set(t, {
-        team: t,
-        matches: 0,
-        autoScore: 0,
-        autoMiss: 0,
-        teleopScore: 0,
-        teleopMiss: 0,
-        mobilityCount: 0,
-        endgameCounts: { none: 0, park: 0, shallow: 0, deep: 0 },
-        foulCount: 0
-      });
+  records.forEach(record => {
+    const team = record.team;
+    if (!teamMap.has(team)) {
+      teamMap.set(team, []);
     }
+    teamMap.get(team)!.push(record);
+  });
+
+  return Array.from(teamMap.entries()).map(([team, matches]) => {
+    const autoScore = matches.reduce((sum, m) => sum + (m.phase?.auto?.scored || 0), 0);
+    const autoMiss = matches.reduce((sum, m) => sum + (m.phase?.auto?.missed || 0), 0);
+    const teleopScore = matches.reduce((sum, m) => sum + (m.phase?.teleop?.scored || 0), 0);
+    const teleopMiss = matches.reduce((sum, m) => sum + (m.phase?.teleop?.missed || 0), 0);
+    const mobilityCount = matches.reduce((sum, m) => sum + (m.phase?.auto?.mobility ? 1 : 0), 0);
+    const foulCount = matches.reduce((sum, m) => sum + (m.fouls || 0), 0);
     
-    const entry = map.get(t)!;
-    entry.matches++;
-    entry.autoScore += rec.phase?.auto?.scored || 0;
-    entry.autoMiss += rec.phase?.auto?.missed || 0;
-    entry.teleopScore += rec.phase?.teleop?.scored || 0;
-    entry.teleopMiss += rec.phase?.teleop?.missed || 0;
-    if (rec.phase?.auto?.mobility) entry.mobilityCount++;
-    
-    const endState = rec.endgame?.climb
-      ? (rec.endgame.climb === 'low' ? 'shallow' : rec.endgame.climb === 'high' ? 'deep' : 'none')
-      : (rec.endgame?.park ? 'park' : 'none');
-    entry.endgameCounts[endState]++;
-    entry.foulCount += rec.fouls || 0;
-  }
-  
-  return Array.from(map.values()).sort((a, b) => a.team - b.team);
+    const endgameCounts = {
+      none: matches.filter(m => m.endgame?.climb === 'none').length,
+      park: matches.filter(m => m.endgame?.park).length,
+      shallow: matches.filter(m => m.endgame?.climb === 'low').length,
+      deep: matches.filter(m => m.endgame?.climb === 'high').length
+    };
+
+    return {
+      team,
+      matches: matches.length,
+      autoScore,
+      autoMiss,
+      teleopScore,
+      teleopMiss,
+      mobilityCount,
+      endgameCounts,
+      foulCount
+    };
+  }).sort((a, b) => b.autoScore + b.teleopScore - (a.autoScore + a.teleopScore));
 }
 
 export default class InfoViewer extends Component<InfoViewerProps, InfoViewerState> {
@@ -98,7 +102,7 @@ export default class InfoViewer extends Component<InfoViewerProps, InfoViewerSta
       summary: [],
       error: null,
       genaiText: '',
-      loading: false
+      loading: true
     };
   }
 
@@ -110,10 +114,6 @@ export default class InfoViewer extends Component<InfoViewerProps, InfoViewerSta
     if (prevProps.root !== this.props.root) {
       this.loadData();
     }
-    
-    if (this.state.summary.length > 0) {
-      this.renderChart();
-    }
   }
 
   componentWillUnmount() {
@@ -124,75 +124,124 @@ export default class InfoViewer extends Component<InfoViewerProps, InfoViewerSta
 
   loadData = async () => {
     const { root } = this.props;
-    if (!root) {
-      this.setState({ summary: [] });
-      return;
-    }
-    
-    this.setState({ loading: true });
+
     try {
-      const recs = await readAllMatches(root);
-      const sum = summarise(recs);
-      this.setState({ summary: sum, error: null, loading: false });
+      this.setState({ loading: true, error: null });
+      
+      let matches: any[] = [];
+      
+      // Try to fetch from server first
+      try {
+        const response = await fetch('/api/scouting/matches');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data && data.data.length > 0) {
+            // Convert server data format to local format
+            matches = data.data.map((m: any) => ({
+              team: m.team_number,
+              game: m.match_number,
+              alliance: m.alliance,
+              scouter: m.scouter_name,
+              phase: {
+                auto: {
+                  scored: m.auto_scored || 0,
+                  missed: m.auto_missed || 0,
+                  mobility: m.auto_mobility || false
+                },
+                teleop: {
+                  scored: m.teleop_scored || 0,
+                  missed: m.teleop_missed || 0
+                }
+              },
+              endgame: {
+                park: m.endgame_park || false,
+                climb: m.endgame_climb || 'none'
+              },
+              fouls: m.fouls || 0,
+              comments: m.comments || ''
+            }));
+            console.log(`Loaded ${matches.length} matches from PostgreSQL server`);
+          }
+        }
+      } catch (serverError) {
+        console.warn('Failed to fetch from server, trying local storage:', serverError);
+      }
+      
+      // Fallback to local storage if server data is empty or failed
+      if (matches.length === 0 && root) {
+        matches = await readAllMatches(root);
+        console.log(`Loaded ${matches.length} matches from local storage`);
+      }
+      
+      const summary = summarise(matches);
+      this.setState({ summary, loading: false });
+      
+      // Render chart after data is loaded
+      setTimeout(() => this.renderChart(), 100);
     } catch (err: any) {
-      this.setState({ error: err.message || 'Failed to read matches', loading: false });
+      this.setState({ error: err.message, loading: false });
     }
   }
 
   renderChart = () => {
-    if (!this.chartRef) return;
-    
+    if (!this.chartRef || this.state.summary.length === 0) return;
+
     if (this.chartInstance) {
       this.chartInstance.destroy();
     }
-    
+
     const { summary } = this.state;
-    if (!summary.length) return;
-
-    const labels = summary.map(e => e.team.toString());
-    const cyclesAvg = summary.map(e => {
-      const totCycles = e.teleopScore;
-      return e.matches ? totCycles / e.matches : 0;
-    });
-    const accuracy = summary.map(e => {
-      const totalAttempts = e.autoScore + e.autoMiss + e.teleopScore + e.teleopMiss;
-      const totalScored = e.autoScore + e.teleopScore;
-      return totalAttempts > 0 ? (totalScored / totalAttempts) * 100 : 0;
-    });
-
-    const data = {
-      labels,
-      datasets: [
-        {
-          label: 'Avg Teleop Cycles',
-          data: cyclesAvg,
-          backgroundColor: 'rgba(54, 162, 235, 0.5)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
-        },
-        {
-          label: 'Accuracy (%)',
-          data: accuracy,
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 1
-        }
-      ]
-    };
+    const teams = summary.map(s => s.team);
+    const autoScores = summary.map(s => s.autoScore);
+    const teleopScores = summary.map(s => s.teleopScore);
 
     const config: any = {
       type: 'bar',
-      data,
+      data: {
+        labels: teams,
+        datasets: [
+          {
+            label: 'Auto Score',
+            data: autoScores,
+            backgroundColor: 'rgba(255, 215, 0, 0.8)',
+            borderColor: 'rgba(255, 215, 0, 1)',
+            borderWidth: 2
+          },
+          {
+            label: 'Teleop Score',
+            data: teleopScores,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            borderColor: 'rgba(0, 0, 0, 1)',
+            borderWidth: 2
+          }
+        ]
+      },
       options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Team Performance Analysis',
+            font: { size: 16, weight: 'bold' as const }
+          },
+          legend: {
+            display: true,
+            position: 'top' as const
+          }
+        },
         scales: {
           y: {
             beginAtZero: true,
-            ticks: {
-              callback: function(value: any) {
-                return value;
-              }
+            title: {
+              display: true,
+              text: 'Score'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Team Number'
             }
           }
         }
@@ -221,136 +270,167 @@ export default class InfoViewer extends Component<InfoViewerProps, InfoViewerSta
     const { summary, error, genaiText, loading } = this.state;
 
     return (
-      <div className="card-modern card">
-        <div className="card-body">
-          <div className="d-flex align-items-center justify-content-between mb-4">
-            <div>
-              <h4 className="mb-1 fw-bold">
-                <i className="fa fa-chart-line me-2 text-success"></i>
-                Information Viewer
-              </h4>
-              <p className="text-muted mb-0 small">Team statistics and match insights</p>
-            </div>
-            {summary.length > 0 && (
-              <span className="badge bg-primary" style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}>
-                <i className="fa fa-users me-2"></i>
-                {summary.length} Teams
-              </span>
-            )}
-          </div>
-
-          {error && (
-            <div className="alert alert-danger d-flex align-items-center gap-2 mb-3">
-              <i className="fa fa-exclamation-circle"></i>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {loading && (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <p className="text-muted mt-3">Loading match data...</p>
-            </div>
-          )}
-
-          {!summary.length && !error && !loading && (
-            <div className="text-center py-5">
-              <i className="fa fa-inbox fa-3x text-muted mb-3"></i>
-              <p className="text-muted">No match data available yet. Start scouting to see insights here.</p>
-            </div>
-          )}
-
-          {summary.length > 0 && (
-            <>
-              <div className="mb-4">
-                <h6 className="fw-semibold mb-3">
-                  <i className="fa fa-chart-line me-2 text-primary"></i>
-                  Performance Overview
-                </h6>
-                <div className="chart-container mb-4" style={{ position: 'relative', height: '300px' }}>
-                  <canvas
-                    ref={(el) => { this.chartRef = el; }}
-                  />
+      <div className="saxon-hero">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="saxon-card">
+            {/* Saxon Header */}
+            <div className="saxon-card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="saxon-module-icon text-3xl">
+                    <i className="fa fa-chart-line"></i>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-saxon-black">WAR ROOM</h1>
+                    <p className="text-saxon-gold-dark">Team statistics and performance metrics</p>
+                  </div>
                 </div>
-              </div>
-
-              <div className="mb-4">
-                <h6 className="fw-semibold mb-3">
-                  <i className="fa fa-table me-2 text-success"></i>
-                  Team Statistics
-                </h6>
-                <div className="table-responsive">
-                  <table className="table table-hover table-striped">
-                    <thead className="table-light">
-                      <tr>
-                        <th className="fw-bold">Team</th>
-                        <th className="fw-bold">Matches</th>
-                        <th className="fw-bold">Auto Score</th>
-                        <th className="fw-bold">Teleop Score</th>
-                        <th className="fw-bold">Mobility</th>
-                        <th className="fw-bold">Endgame</th>
-                        <th className="fw-bold">Fouls</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.map(entry => (
-                        <tr key={entry.team}>
-                          <td className="fw-semibold">{entry.team}</td>
-                          <td>
-                            <span className="badge bg-secondary">{entry.matches}</span>
-                          </td>
-                          <td>
-                            <span className="badge bg-primary">{entry.autoScore}</span>
-                          </td>
-                          <td>
-                            <span className="badge bg-success">{entry.teleopScore}</span>
-                          </td>
-                          <td>
-                            <span className="badge bg-info">{entry.mobilityCount}</span>
-                          </td>
-                          <td className="small">
-                            <span className="text-muted">N:</span>{entry.endgameCounts.none}
-                            <span className="text-muted ms-2">P:</span>{entry.endgameCounts.park}
-                            <span className="text-muted ms-2">S:</span>{entry.endgameCounts.shallow}
-                            <span className="text-muted ms-2">D:</span>{entry.endgameCounts.deep}
-                          </td>
-                          <td>
-                            <span className="badge bg-danger">{entry.foulCount}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="border-top pt-3">
-                <h6 className="fw-semibold mb-3">
-                  <i className="fa fa-robot me-2 text-warning"></i>
-                  AI Insights (Optional)
-                </h6>
-                <button
-                  className="btn btn-outline-primary"
-                  onClick={this.askGenAI}
-                  disabled={genaiText.length > 0}
-                >
-                  <i className="fa fa-sparkles me-2"></i>
-                  Generate AI Insights
-                </button>
-                {genaiText && (
-                  <div className="alert alert-info mt-3">
-                    <strong className="d-block mb-2">
-                      <i className="fa fa-lightbulb me-2"></i>
-                      AI Analysis:
-                    </strong>
-                    {genaiText}
+                {summary.length > 0 && (
+                  <div className="flex items-center space-x-4">
+                    <span className="saxon-badge">{summary.length} Teams</span>
+                    <span className="saxon-badge-outline">Analytics</span>
                   </div>
                 )}
               </div>
-            </>
-          )}
+            </div>
+
+            <div className="saxon-card-body">
+              {loading && (
+                <div className="text-center py-12">
+                  <div className="saxon-loading-lg mx-auto mb-4"></div>
+                  <p className="text-saxon-gold-dark">Loading analytics data...</p>
+                </div>
+              )}
+
+              {error && (
+                <div className="saxon-alert saxon-alert-error mb-6">
+                  <div className="flex items-center">
+                    <i className="fa fa-exclamation-triangle mr-4 text-2xl"></i>
+                    <div>
+                      <strong>Error:</strong> {error}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!loading && !error && summary.length === 0 && (
+                <div className="saxon-alert saxon-alert-warning mb-6">
+                  <div className="flex items-center">
+                    <i className="fa fa-info-circle mr-4 text-2xl"></i>
+                    <div>
+                      <strong>No Data:</strong> No scouting data found. Start scouting matches to see analytics.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!loading && !error && summary.length > 0 && (
+                <>
+                  {/* Performance Chart */}
+                  <div className="saxon-card bg-saxon-gold-light mb-6">
+                    <div className="saxon-card-body">
+                      <h3 className="font-bold text-saxon-black mb-4">
+                        <i className="fa fa-chart-bar mr-2"></i>
+                        TEAM PERFORMANCE ANALYSIS
+                      </h3>
+                      <div className="relative" style={{ height: '400px' }}>
+                        <canvas ref={(ref) => this.chartRef = ref}></canvas>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Team Statistics Table */}
+                  <div className="saxon-card mb-6">
+                    <div className="saxon-card-body">
+                      <h3 className="font-bold text-saxon-black mb-4">
+                        <i className="fa fa-table mr-2"></i>
+                        TEAM STATISTICS
+                      </h3>
+                      <div className="overflow-x-auto">
+                        <table className="saxon-table">
+                          <thead>
+                            <tr>
+                              <th>Team</th>
+                              <th>Matches</th>
+                              <th>Auto Score</th>
+                              <th>Teleop Score</th>
+                              <th>Mobility</th>
+                              <th>Endgame</th>
+                              <th>Fouls</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {summary.map((entry, index) => (
+                              <tr key={entry.team}>
+                                <td className="font-bold">{entry.team}</td>
+                                <td>{entry.matches}</td>
+                                <td className="text-saxon-gold-dark font-bold">{entry.autoScore}</td>
+                                <td className="text-saxon-black font-bold">{entry.teleopScore}</td>
+                                <td>
+                                  <span className="saxon-badge-outline text-xs">
+                                    {entry.mobilityCount}/{entry.matches}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div className="text-xs space-y-1">
+                                    <div>Park: {entry.endgameCounts.park}</div>
+                                    <div>Shallow: {entry.endgameCounts.shallow}</div>
+                                    <div>Deep: {entry.endgameCounts.deep}</div>
+                                  </div>
+                                </td>
+                                <td className="text-red-600 font-bold">{entry.foulCount}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Insights */}
+                  <div className="saxon-card bg-saxon-gold-light">
+                    <div className="saxon-card-body">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-saxon-black">
+                          <i className="fa fa-brain mr-2"></i>
+                          AI STRATEGIC INSIGHTS
+                        </h3>
+                        <button
+                          className="saxon-btn-outline"
+                          onClick={this.askGenAI}
+                        >
+                          <i className="fa fa-magic mr-2"></i>
+                          Generate Insights
+                        </button>
+                      </div>
+                      {genaiText ? (
+                        <div className="bg-white p-4 rounded-xl border-2 border-saxon-gold">
+                          <p className="text-saxon-black whitespace-pre-wrap">{genaiText}</p>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-saxon-gold-dark">
+                          <i className="fa fa-robot text-4xl mb-4"></i>
+                          <p>Click "Generate Insights" to get AI-powered strategic analysis</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Saxon Footer */}
+            <div className="saxon-card-footer">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-saxon-gold-dark">
+                  <strong>WAR ROOM ANALYTICS</strong> • Team 611 Saxon Robotics
+                </div>
+                <div className="text-sm text-saxon-black">
+                  FRC 2025 REEFSCAPE
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
