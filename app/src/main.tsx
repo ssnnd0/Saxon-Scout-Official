@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './views/App';
 import { registerServiceWorker, setupInstallPrompt, onOnlineStatusChange } from './lib/pwa-register';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './styles/theme.css';
 
