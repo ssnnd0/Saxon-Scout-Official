@@ -32,20 +32,46 @@ export async function isOnline(): Promise<boolean> {
 /**
  * Save match data with server-first approach
  * - If online: Save to PostgreSQL immediately, then local as backup
- * - If offline: Save to local only
+ * - If offline: Save to local only with automatic sync when online
  */
 export async function saveMatchData(matchData: any, root: any): Promise<{
   success: boolean;
   savedToServer: boolean;
   savedToLocal: boolean;
   error?: string;
+  syncPending?: boolean;
 }> {
   const online = await isOnline();
   let savedToServer = false;
   let savedToLocal = false;
+  let syncPending = false;
   let lastError: string | undefined;
+  const timestamp = Date.now();
+  const filename = `match-${matchData.team}-${matchData.game}-${timestamp}.json`;
+  
+  // Prepare server payload
+  const serverPayload = {
+    team_number: matchData.team,
+    match_number: matchData.game,
+    alliance: matchData.alliance,
+    scouter_name: matchData.scouter,
+    auto_scored: matchData.phase?.auto?.scored || 0,
+    auto_missed: matchData.phase?.auto?.missed || 0,
+    auto_mobility: matchData.phase?.auto?.mobility || false,
+    auto_notes: matchData.phase?.auto?.notes || '',
+    teleop_cycles: matchData.phase?.teleop?.cycles || 0,
+    teleop_scored: matchData.phase?.teleop?.scored || 0,
+    teleop_missed: matchData.phase?.teleop?.missed || 0,
+    teleop_defense: matchData.phase?.teleop?.defense || '',
+    endgame_park: matchData.endgame?.park || false,
+    endgame_climb: matchData.endgame?.climb || 'none',
+    fouls: matchData.fouls || 0,
+    comments: matchData.comments || '',
+    timestamp: timestamp,
+    local_filename: filename
+  };
 
-  // Try server first if online
+  // Try server first if online (PRIMARY STORAGE)
   if (online) {
     try {
       const response = await fetch('/api/scouting/matches', {
@@ -53,24 +79,7 @@ export async function saveMatchData(matchData: any, root: any): Promise<{
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          team_number: matchData.team,
-          match_number: matchData.game,
-          alliance: matchData.alliance,
-          scouter_name: matchData.scouter,
-          auto_scored: matchData.phase?.auto?.scored || 0,
-          auto_missed: matchData.phase?.auto?.missed || 0,
-          auto_mobility: matchData.phase?.auto?.mobility || false,
-          auto_notes: matchData.phase?.auto?.notes || '',
-          teleop_cycles: matchData.phase?.teleop?.cycles || 0,
-          teleop_scored: matchData.phase?.teleop?.scored || 0,
-          teleop_missed: matchData.phase?.teleop?.missed || 0,
-          teleop_defense: matchData.phase?.teleop?.defense || '',
-          endgame_park: matchData.endgame?.park || false,
-          endgame_climb: matchData.endgame?.climb || 'none',
-          fouls: matchData.fouls || 0,
-          comments: matchData.comments || ''
-        })
+        body: JSON.stringify(serverPayload)
       });
 
       if (response.ok) {
@@ -89,9 +98,39 @@ export async function saveMatchData(matchData: any, root: any): Promise<{
   if (root) {
     try {
       const { writeJSON } = await import('./fsStore');
-      const filename = `match-${matchData.team}-${matchData.game}-${Date.now()}.json`;
-      await writeJSON(root, `matches/${filename}`, matchData);
+      
+      // Add sync status to local data
+      const localData = {
+        ...matchData,
+        _meta: {
+          syncedToServer: savedToServer,
+          timestamp: timestamp,
+          pendingSync: !savedToServer && online === false
+        }
+      };
+      
+      await writeJSON(root, `matches/${filename}`, localData);
       savedToLocal = true;
+      
+      // If we couldn't save to server but we're offline, mark for future sync
+      if (!savedToServer && !online) {
+        syncPending = true;
+        // Add to pending sync queue in localStorage
+        try {
+          const pendingSyncs = JSON.parse(localStorage.getItem('saxon-scout-pending-syncs') || '[]');
+          pendingSyncs.push({
+            type: 'match',
+            filename: filename,
+            timestamp: timestamp,
+            path: `matches/${filename}`
+          });
+          localStorage.setItem('saxon-scout-pending-syncs', JSON.stringify(pendingSyncs));
+          console.log('✓ Added to sync queue for when online');
+        } catch (syncError) {
+          console.warn('Failed to add to sync queue:', syncError);
+        }
+      }
+      
       console.log(`✓ Data saved locally: ${filename}`);
     } catch (error: any) {
       console.error('Failed to save locally:', error);
@@ -103,25 +142,44 @@ export async function saveMatchData(matchData: any, root: any): Promise<{
     success: savedToServer || savedToLocal,
     savedToServer,
     savedToLocal,
-    error: (!savedToServer && !savedToLocal) ? lastError : undefined
+    syncPending: syncPending || false,
+    error: (!savedToServer && !savedToLocal) ? (lastError || '') : ''
   };
 }
 
 /**
- * Save pit scouting data with server-first approach
+ * Save pit scouting data with server-first approach and offline sync capability
  */
 export async function savePitData(pitData: any, root: any): Promise<{
   success: boolean;
   savedToServer: boolean;
   savedToLocal: boolean;
+  syncPending?: boolean;
   error?: string;
 }> {
   const online = await isOnline();
   let savedToServer = false;
   let savedToLocal = false;
+  let syncPending = false;
   let lastError: string | undefined;
+  const timestamp = Date.now();
+  const filename = `pit-${pitData.team}-${timestamp}.json`;
 
-  // Try server first if online
+  // Prepare server payload
+  const serverPayload = {
+    team_number: pitData.team,
+    scouter_name: pitData.scouter,
+    drivetrain: pitData.drivetrain || '',
+    auto_paths: pitData.autoPaths || [],
+    preferred_zones: pitData.zones || [],
+    cycle_time_est: pitData.cycleTime || 0,
+    climb: pitData.canClimb || false,
+    notes: pitData.notes || '',
+    timestamp: timestamp,
+    local_filename: filename
+  };
+
+  // Try server first if online (PRIMARY STORAGE)
   if (online) {
     try {
       const response = await fetch('/api/scouting/pit', {
@@ -129,16 +187,7 @@ export async function savePitData(pitData: any, root: any): Promise<{
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          team_number: pitData.team,
-          scouter_name: pitData.scouter,
-          drivetrain: pitData.drivetrain || '',
-          auto_paths: pitData.autoPaths || [],
-          preferred_zones: pitData.zones || [],
-          cycle_time_est: pitData.cycleTime || 0,
-          climb: pitData.canClimb || false,
-          notes: pitData.notes || ''
-        })
+        body: JSON.stringify(serverPayload)
       });
 
       if (response.ok) {
@@ -153,13 +202,43 @@ export async function savePitData(pitData: any, root: any): Promise<{
     }
   }
 
-  // Save to local filesystem as backup or primary
+  // Save to local filesystem as backup (if server succeeded) or primary (if offline/server failed)
   if (root) {
     try {
       const { writeJSON } = await import('./fsStore');
-      const filename = `pit-${pitData.team}-${Date.now()}.json`;
-      await writeJSON(root, `pit/${filename}`, pitData);
+      
+      // Add sync status to local data
+      const localData = {
+        ...pitData,
+        _meta: {
+          syncedToServer: savedToServer,
+          timestamp: timestamp,
+          pendingSync: !savedToServer && online === false
+        }
+      };
+      
+      await writeJSON(root, `pit/${filename}`, localData);
       savedToLocal = true;
+      
+      // If we couldn't save to server but we're offline, mark for future sync
+      if (!savedToServer && !online) {
+        syncPending = true;
+        // Add to pending sync queue in localStorage
+        try {
+          const pendingSyncs = JSON.parse(localStorage.getItem('saxon-scout-pending-syncs') || '[]');
+          pendingSyncs.push({
+            type: 'pit',
+            filename: filename,
+            timestamp: timestamp,
+            path: `pit/${filename}`
+          });
+          localStorage.setItem('saxon-scout-pending-syncs', JSON.stringify(pendingSyncs));
+          console.log('✓ Added pit data to sync queue for when online');
+        } catch (syncError) {
+          console.warn('Failed to add pit data to sync queue:', syncError);
+        }
+      }
+      
       console.log(`✓ Pit data saved locally: ${filename}`);
     } catch (error: any) {
       console.error('Failed to save pit data locally:', error);
@@ -171,7 +250,8 @@ export async function savePitData(pitData: any, root: any): Promise<{
     success: savedToServer || savedToLocal,
     savedToServer,
     savedToLocal,
-    error: (!savedToServer && !savedToLocal) ? lastError : undefined
+    syncPending: syncPending || false,
+    error: (!savedToServer && !savedToLocal) ? (lastError || '') : ''
   };
 }
 

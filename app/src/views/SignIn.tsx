@@ -95,7 +95,7 @@ const SignIn: React.FC<SignInProps> = ({ onLogin }) => {
                 Continue with Google
               </a>
               <div className="text-xs text-center" style={{ color: 'var(--color-text-tertiary)' }}>
-                Your role is assigned automatically. Emails ending with <code>@saxonrobotics.org</code> are granted admin.
+                Your role is assigned automatically. Email <code>sthornton@saxonrobotics.org</code> about errors.
               </div>
             </form>
           </div>

@@ -1,0 +1,38 @@
+declare module '@mui/icons-material' {
+  export const Delete: React.ComponentType<any>;
+  export const Refresh: React.ComponentType<any>;
+  export const Search: React.ComponentType<any>;
+  export const Add: React.ComponentType<any>;
+  export const Edit: React.ComponentType<any>;
+  export const Close: React.ComponentType<any>;
+  export const Menu: React.ComponentType<any>;
+  export const Dashboard: React.ComponentType<any>;
+  export const Settings: React.ComponentType<any>;
+  export const Person: React.ComponentType<any>;
+  export const ExitToApp: React.ComponentType<any>;
+  export const ArrowBack: React.ComponentType<any>;
+  export const ArrowForward: React.ComponentType<any>;
+  export const Save: React.ComponentType<any>;
+  export const Upload: React.ComponentType<any>;
+  export const Download: React.ComponentType<any>;
+  export const MoreVert: React.ComponentType<any>;
+  export const Check: React.ComponentType<any>;
+  export const Info: React.ComponentType<any>;
+  export const Warning: React.ComponentType<any>;
+  export const Error: React.ComponentType<any>;
+  export const Help: React.ComponentType<any>;
+  export const Home: React.ComponentType<any>;
+  
+  // Add missing icons
+  export const ChevronLeft: React.ComponentType<any>;
+  export const Assessment: React.ComponentType<any>;
+  export const Logout: React.ComponentType<any>;
+  export const Brightness4: React.ComponentType<any>;
+  export const Brightness7: React.ComponentType<any>;
+  export const Build: React.ComponentType<any>;
+  export const Schedule: React.ComponentType<any>;
+  export const Group: React.ComponentType<any>;
+  export const Analytics: React.ComponentType<any>;
+  export const CloudDownload: React.ComponentType<any>;
+  export const AdminPanelSettings: React.ComponentType<any>;
+}

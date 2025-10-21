@@ -5,6 +5,7 @@ import { DesktopSidebar } from './DesktopSidebar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { MobileDrawer } from './MobileDrawer';
 import { ResponsiveHeader } from './ResponsiveHeader';
+import { OfflinePrompt } from '../Connectivity/OfflinePrompt';
 import type { DirHandle } from '../../lib/fsStore';
 
 interface AppLayoutProps {
@@ -121,6 +122,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         isOpen={drawerOpen}
         onClose={closeDrawer}
         isAdmin={isAdmin}
+      />
+      
+      {/* Offline Prompt */}
+      <OfflinePrompt 
+        root={root}
+        onSelectFolder={() => {
+          window.dispatchEvent(new CustomEvent('saxon-scout:request-folder'));
+          return Promise.resolve();
+        }}
       />
     </div>
   );

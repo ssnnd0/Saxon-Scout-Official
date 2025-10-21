@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useState, useEffect } from 'react';
+import React, { Suspense, useCallback, useState, useEffect, lazy } from 'react';
 import { BrowserRouter as Router, useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import { pickRoot, DirHandle } from '../lib/fsStore';
 import { APIProvider, APIErrorBoundary } from '../lib/api';
@@ -7,7 +7,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import ErrorBoundary from '../components/ErrorBoundary';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { AppLayout } from '../components/Layout/AppLayout';
+import { ModernAppLayout } from '../components/Layout/ModernAppLayout';
+import ThemeProvider from '../components/ThemeProvider';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/theme.css';
 
@@ -21,22 +22,22 @@ interface AppState {
   theme: 'light' | 'dark';
 }
 
-// Lazy load components
-const QuickScout = React.lazy(() => import('./QuickScout'));
-const InfoViewer = React.lazy(() => import('./InfoViewer'));
-const PitScout = React.lazy(() => import('./PitScout'));
-const AllianceSelection = React.lazy(() => import('./AllianceSelection'));
-const MatchPlanning = React.lazy(() => import('./MatchPlanning'));
-const EventSchedule = React.lazy(() => import('./EventSchedule'));
-const Analytics = React.lazy(() => import('./Analytics'));
-const ExportView = React.lazy(() => import('./Export'));
-const Settings = React.lazy(() => import('./Settings'));
-const AdminPortal = React.lazy(() => import('./AdminPortal'));
-const UserManagement = React.lazy(() => import('./UserManagement'));
-const SignIn = React.lazy(() => import('./SignIn'));
-const Home = React.lazy(() => import('./Home'));
-const NotFound = React.lazy(() => import('./NotFound'));
-const AppShell = React.lazy(() => import('../components/AppShell'));
+// Lazy load components for better performance
+const QuickScout = lazy(() => import('./QuickScout'));
+const InfoViewer = lazy(() => import('./InfoViewer'));
+const PitScout = lazy(() => import('./PitScout'));
+const AllianceSelection = lazy(() => import('./AllianceSelection'));
+const MatchPlanning = lazy(() => import('./MatchPlanning'));
+const EventSchedule = lazy(() => import('./EventSchedule'));
+const Analytics = lazy(() => import('./Analytics'));
+const ExportView = lazy(() => import('./Export'));
+const Settings = lazy(() => import('./Settings'));
+const AdminPortal = lazy(() => import('./AdminPortal'));
+const UserManagement = lazy(() => import('./UserManagement'));
+const SignIn = lazy(() => import('./SignIn'));
+const Home = lazy(() => import('./Home'));
+const NotFound = lazy(() => import('./NotFound'));
+const AppShell = lazy(() => import('../components/AppShell'));
 
 /**
  * Top-level application component. Manages global state such as the selected
@@ -174,7 +175,7 @@ function App() {
             </div>
             <h3 className="h5 mb-3">Initialization Error</h3>
             <p className="text-muted mb-2">{initError}</p>
-            <p className="text-muted small mb-4">Please check your browser compatibility and try refreshing the page.</p>
+            <p className="text-muted small mb-4">Please check your browser compatibility and try refreshing the page. ps ur dumb AF</p>
             <button
               onClick={() => window.location.reload()}
               className="btn btn-primary"
@@ -191,10 +192,10 @@ function App() {
     return (
       <div className="container py-5">
         <div className="alert alert-info border-start border-4 border-info" role="alert">
-          <h4 className="alert-heading">Browser Not Supported</h4>
-          <p>Saxon Scout requires a modern browser with File System Access API support.</p>
+          <h4 className="alert-heading"><strong>Browser Not Supported</strong></h4>
+          <p><strong>Saxon Scout requires a modern browser with File System Access API support.</strong></p>
           <hr />
-          <p className="mb-0">Please use Chrome, Edge, or Opera (version 86+).</p>
+          <p className="mb-0"><strong>Please use Chrome, Edge, or Opera (version 86+)</strong> or any other modern browser.</p>
         </div>
       </div>
     );
@@ -230,7 +231,7 @@ function App() {
 
   // Logged in with folder - show main app with layout
   const content = (
-    <AppLayout
+    <ModernAppLayout
       root={root}
       scouter={scouter}
       onLogout={handleLogout}
@@ -344,25 +345,27 @@ function App() {
           }
         />
       </Routes>
-    </AppLayout>
+    </ModernAppLayout>
   );
 
   return (
-    <SettingsProvider>
-      <APIProvider>
-        <APIErrorBoundary>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center min-h-screen">
-                <LoadingSpinner size="lg" />
-              </div>
-            }
-          >
-            {content}
-          </Suspense>
-        </APIErrorBoundary>
-      </APIProvider>
-    </SettingsProvider>
+    <ThemeProvider>
+      <SettingsProvider>
+        <APIProvider>
+          <APIErrorBoundary>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                  <LoadingSpinner size="lg" />
+                </div>
+              }
+            >
+              {content}
+            </Suspense>
+          </APIErrorBoundary>
+        </APIProvider>
+      </SettingsProvider>
+    </ThemeProvider>
   );
 }
 

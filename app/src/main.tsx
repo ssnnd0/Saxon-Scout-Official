@@ -2,9 +2,14 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './views/App';
 import { registerServiceWorker, setupInstallPrompt, onOnlineStatusChange } from './lib/pwa-register';
+import { syncManager } from './lib/syncManager';
+import performanceMonitor from './lib/performanceMonitor';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './styles/theme.css';
+
+// Start performance monitoring
+const endInitialLoad = performanceMonitor.startTiming('resource', 'initial-app-load');
 
 console.log('Starting Saxon Scout application...');
 
@@ -23,7 +28,13 @@ root.render(
   </React.StrictMode>
 );
 
-try { (window as any).__saxon_app_ready = true; } catch (e) {}
+try { 
+  (window as any).__saxon_app_ready = true; 
+  // End initial load timing
+  endInitialLoad();
+  // Log performance metrics
+  performanceMonitor.logMetrics('App Initial Load Complete');
+} catch (e) {}
 
 // Register PWA Service Worker
 console.log('Registering Service Worker...');
