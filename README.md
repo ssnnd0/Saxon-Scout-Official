@@ -35,7 +35,7 @@
 
 Saxon Scout is a comprehensive, enterprise-grade scouting platform for the FIRST Robotics Competition (FRC) 2025 REEFSCAPE season. Built with modern web technologies, it provides powerful tools for match scouting, pit scouting, alliance selection, match planning, and strategic analysis.
 
-## ⚡ Quick Start
+## Quick Start
 
 ```bash
 # 1. Clone the repository
@@ -57,7 +57,7 @@ npm start
 
 Open `http://localhost:8787` in your browser!
 
-## ✨ Key Features
+## Key Features
 
 ### Core Scouting
 - **Match Scouting**: Rapid data collection with intuitive interface
@@ -78,7 +78,7 @@ Open `http://localhost:8787` in your browser!
 - **Session Management**: Secure JWT-based authentication
 - **Admin Dashboard**: User administration and system monitoring
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 - React 18 with TypeScript
@@ -200,19 +200,6 @@ Saxon-Scout-Official/
 └── dist/                   # Compiled output (build artifacts)
 ```
 
-## Features (game-specific)
-
-### Coral scoring
-- Track coral placements across levels L1–L4
-- Separate recording for autonomous and teleoperated phases
-
-### Algae management
-- Track algae scoring into processor and net targets
-- Estimate cycle times
-
-### Endgame
-- Record climb/park states and fouls
-
 ## Reliability and compatibility
 
 - Designed for offline use with the File System Access API (Chromium-based browsers recommended)
@@ -224,15 +211,6 @@ Saxon-Scout-Official/
 - Ensure Node.js 16+ is installed
 - If builds fail, remove `node_modules` and run `npm install` again
 - For browser issues, verify File System Access API support and check the developer console
-
-## Contributing
-
-1. Fork the repository
-2. Create a branch for your feature (`git checkout -b feature/your-feature`)
-3. Commit and push your changes
-4. Open a pull request for review
-
-Follow TypeScript and component design best practices. Include tests and documentation for non-trivial features.
 
 ## License
 
