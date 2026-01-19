@@ -14,7 +14,7 @@ export const AutoStart: React.FC<AutoStartProps> = ({ matchData, setMatchData, s
   const isRed = matchData.alliance === 'Red';
 
   return (
-    <div className="flex flex-col h-full w-full p-4 md:p-6 text-slate-900 dark:text-white bg-slate-50 dark:bg-obsidian">
+    <div className="flex flex-col h-full w-full p-4 md:p-6 text-slate-900 dark:text-white bg-slate-50 dark:bg-obsidian overflow-y-auto md:overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center">
@@ -31,13 +31,16 @@ export const AutoStart: React.FC<AutoStartProps> = ({ matchData, setMatchData, s
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-6xl mx-auto">
+      <div className="flex-1 flex flex-col items-center justify-start md:justify-center w-full max-w-6xl mx-auto relative">
         
-        {/* Map Container - Relative for absolute positioning of overlay */}
-        <div className="relative w-full aspect-[2/1] bg-white dark:bg-obsidian-light rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden group">
+        {/* Map Container */}
+        {/* Mobile: Square (1:1) to show half field. Desktop: 2:1 full field. */}
+        <div className="relative w-full aspect-square md:aspect-[2/1] bg-white dark:bg-obsidian-light rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden group shrink-0 transition-all duration-300">
             
-            {/* Field Map Background */}
-            <div className="absolute inset-0">
+            {/* Field Map Wrapper - Transforms for Zoom/Crop on Mobile */}
+            <div className={`absolute top-0 h-full w-[200%] md:w-full transition-transform duration-500 ${
+                isRed ? '-translate-x-1/2 md:translate-x-0' : 'translate-x-0'
+            }`}>
                  <FieldMap 
                     selectedZone={matchData.startingZone}
                     onSelectZone={(zone) => setMatchData(prev => ({ ...prev, startingZone: zone }))}
@@ -45,57 +48,62 @@ export const AutoStart: React.FC<AutoStartProps> = ({ matchData, setMatchData, s
                 />
             </div>
 
-            {/* Hint Text (Fades out when zone selected) */}
+            {/* Hint Text (Desktop Only) */}
             {!matchData.startingZone && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 hidden md:flex items-center justify-center pointer-events-none">
                     <div className="bg-black/50 backdrop-blur-sm text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 animate-pulse">
                         <Crosshair size={20} /> Tap your starting position
                     </div>
                 </div>
             )}
-
-            {/* Overlay Start Panel - Positioned opposite to selection buttons */}
+            
+            {/* Desktop Overlay Panel (Hidden on Mobile) */}
             {/* If Red (Zones on Right), panel goes Left. If Blue (Zones on Left), panel goes Right. */}
-            <div className={`absolute top-0 bottom-0 w-1/3 min-w-[280px] p-6 flex flex-col justify-center pointer-events-none transition-all duration-500 ${isRed ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l'} from-white/90 via-white/50 to-transparent dark:from-obsidian-light/90 dark:via-obsidian-light/50`}>
-                 
-                 <div className={`pointer-events-auto bg-white/80 dark:bg-obsidian/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl space-y-4 transform transition-all duration-500 ${matchData.startingZone ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-50 grayscale'}`}>
-                     
-                     <div>
-                        <p className="text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-widest mb-1">Starting Zone</p>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white tracking-wide">
-                            {matchData.startingZone ? (
-                                <span className="text-matcha flex items-center gap-2">
-                                    <CheckCircle size={24} className="fill-matcha stroke-obsidian"/> 
-                                    {matchData.startingZone.replace('-', ' ').replace(matchData.alliance, '').trim().toUpperCase()}
-                                </span>
-                            ) : (
-                                <span className="text-slate-400">---</span>
-                            )}
-                        </div>
-                     </div>
-
-                     <div className="pt-2">
-                        <Button 
-                            variant="success" 
-                            fullWidth 
-                            disabled={!matchData.startingZone}
-                            onClick={() => setView('AUTO_SCORING')}
-                            className="h-16 text-xl shadow-lg shadow-matcha/20 flex items-center justify-center gap-3"
-                        >
-                            <PlayCircle size={24} fill="currentColor" className="text-obsidian" />
-                            START AUTO
-                        </Button>
-                     </div>
-
-                 </div>
+            <div className={`hidden md:flex absolute top-0 bottom-0 w-1/3 min-w-[280px] p-6 flex-col justify-center pointer-events-none transition-all duration-500 ${isRed ? 'left-0 bg-gradient-to-r' : 'right-0 bg-gradient-to-l'} from-white/90 via-white/50 to-transparent dark:from-obsidian-light/90 dark:via-obsidian-light/50`}>
+                <StartPanelContent matchData={matchData} setView={setView} isMobile={false} />
             </div>
         </div>
-        
-        {/* Mobile-only hint if needed below, usually the overlay covers it */}
-        <div className="md:hidden mt-4 text-xs text-slate-400 text-center px-6">
-            If the interface is too cramped, try rotating your device to landscape.
+
+        {/* Mobile Action Panel (Below Map) */}
+        <div className="md:hidden w-full mt-4">
+            <div className="bg-white dark:bg-obsidian-light p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg">
+                <StartPanelContent matchData={matchData} setView={setView} isMobile={true} />
+            </div>
         </div>
+
       </div>
     </div>
   );
 };
+
+// Extracted Content for Reusability
+const StartPanelContent = ({ matchData, setView, isMobile }: { matchData: MatchData, setView: (v: ViewState) => void, isMobile: boolean }) => (
+    <div className={`pointer-events-auto space-y-4 ${!isMobile ? 'bg-white/80 dark:bg-obsidian/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl transform transition-all duration-500' : ''} ${!isMobile && !matchData.startingZone ? 'translate-y-10 opacity-50 grayscale' : 'translate-y-0 opacity-100'}`}>
+        <div>
+           <p className="text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-widest mb-1">Starting Zone</p>
+           <div className="text-2xl font-black text-slate-900 dark:text-white tracking-wide">
+               {matchData.startingZone ? (
+                   <span className="text-matcha flex items-center gap-2">
+                       <CheckCircle size={24} className="fill-matcha stroke-obsidian"/> 
+                       {matchData.startingZone.replace('-', ' ').replace(matchData.alliance, '').trim().toUpperCase()}
+                   </span>
+               ) : (
+                   <span className="text-slate-400">---</span>
+               )}
+           </div>
+        </div>
+
+        <div className="pt-2">
+           <Button 
+               variant="success" 
+               fullWidth 
+               disabled={!matchData.startingZone}
+               onClick={() => setView('AUTO_SCORING')}
+               className="h-16 text-xl shadow-lg shadow-matcha/20 flex items-center justify-center gap-3"
+           >
+               <PlayCircle size={24} fill="currentColor" className="text-obsidian" />
+               START AUTO
+           </Button>
+        </div>
+    </div>
+);
