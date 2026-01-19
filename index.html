@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SaxonScout" />
+    
+    <title>SaxonScout 2026 - REBUILT</title>
+    
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Initialize Theme
+      try {
+        const stored = localStorage.getItem('saxon_preferences');
+        const prefs = stored ? JSON.parse(stored) : { theme: 'system' };
+        
+        const root = document.documentElement;
+        // Reset classes
+        root.classList.remove('dark', 'theme-gold');
+
+        if (prefs.theme === 'gold') {
+           root.classList.add('dark', 'theme-gold');
+        } else if (prefs.theme === 'dark' || (prefs.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+           root.classList.add('dark');
+        }
+      } catch (e) {
+        console.error("Theme init error", e);
+      }
+
+      // Register Service Worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((reg) => console.log('Service Worker: Registered (Scope: ' + reg.scope + ')'))
+            .catch((err) => console.log('Service Worker: Error ' + err));
+        });
+      }
+
+      if (typeof process === 'undefined') {
+        window.process = { env: { API_KEY: '' } };
+      }
+      
+      tailwind.config = {
+        darkMode: 'class', 
+        theme: {
+          extend: {
+            colors: {
+              obsidian: '#000000', // Deep Black
+              'obsidian-light': '#0F110F', 
+              fuel: '#D4AF37', // Gold for Fuel
+              tower: '#ef4444', 
+              'saxon-red': '#A8C66C', 
+              // Refactored to use CSS variables for dynamic theming
+              matcha: {
+                DEFAULT: 'var(--color-matcha-default)',
+                dark: 'var(--color-matcha-dark)',
+                light: 'var(--color-matcha-light)'
+              },
+              gold: {
+                DEFAULT: '#D4AF37',
+                light: '#F4D06F',
+                dark: '#AA8C2C'
+              },
+              indigo: {
+                200: '#CBE0A2',
+                300: '#B9D386',
+                400: '#A8C66C',
+                500: '#A8C66C', 
+                600: '#7A9448', 
+                700: '#5C7036',
+                900: '#D4AF37', 
+              },
+              slate: {
+                750: '#1A1C1A', 
+                850: '#111311', 
+                950: '#080908', 
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+            animation: {
+              'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      :root {
+        /* Default Green Theme */
+        --color-matcha-default: #A8C66C;
+        --color-matcha-dark: #7A9448;
+        --color-matcha-light: #CBE0A2;
+      }
+
+      /* Gold Theme Overrides */
+      .theme-gold {
+        /* Primary becomes Gold */
+        --color-matcha-default: #D4AF37;
+        --color-matcha-dark: #AA8C2C;
+        --color-matcha-light: #F4D06F;
+      }
+
+      /* In Gold Theme, we can optionally make 'gold' utility classes green to act as secondary, 
+         but for now we keep specific named colors consistent and only swap the primary brand color.
+      */
+
+      /* Base styles */
+      body {
+        min-height: 100vh;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
+      }
+
+      /* Dark Mode & Gold Mode Styles */
+      html.dark body {
+        background-color: #000000;
+        background-image: radial-gradient(circle at 50% 0%, #1a2e1a 0%, #000000 70%);
+        color: #e2e8f0;
+      }
+      
+      html.theme-gold body {
+        /* Gold theme background uses a gold tint instead of green tint */
+        background-image: radial-gradient(circle at 50% 0%, #2e261a 0%, #000000 70%);
+      }
+      
+      html.dark ::selection {
+        background-color: var(--color-matcha-default);
+        color: #000000;
+      }
+      
+      html.dark ::-webkit-scrollbar-track { background: #000000; }
+      html.dark ::-webkit-scrollbar-thumb { background: #333; }
+
+      /* Light Mode Styles */
+      html:not(.dark) body {
+        background-color: #f8fafc; /* Slate 50 */
+        background-image: radial-gradient(circle at 50% 0%, #dcfce7 0%, #f8fafc 70%); /* Light Green tint */
+        color: #0f172a; /* Slate 900 */
+      }
+      
+      html:not(.dark) ::selection {
+        background-color: var(--color-matcha-default);
+        color: #ffffff;
+      }
+      
+      html:not(.dark) ::-webkit-scrollbar-track { background: #f1f5f9; }
+      html:not(.dark) ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-thumb {
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #D4AF37; 
+      }
+      
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      .transform-gpu { transform: translate3d(0,0,0); }
+      
+      .glow-matcha { box-shadow: 0 0 15px rgba(168, 198, 108, 0.3); }
+      /* Gold theme specific glow update if needed via specificity, or just rely on color var if using dynamic shadows */
+      .theme-gold .glow-matcha { box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+      
+      .glow-gold { box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+      
+      /* Markdown Styles */
+      .prose h1, .prose h2, .prose h3 {
+        color: inherit;
+        font-weight: 800;
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+      }
+      .prose p { margin-bottom: 0.75em; }
+      .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
+      .prose strong { color: var(--color-matcha-default); }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react-qr-code": "https://esm.sh/react-qr-code@^2.0.18",
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "socket.io-client": "https://esm.sh/socket.io-client@^4.8.3",
+    "marked": "https://esm.sh/marked@12.0.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

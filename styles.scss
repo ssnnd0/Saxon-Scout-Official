@@ -1,0 +1,58 @@
+$color-matcha: #A8C66C;
+$color-black: #000000;
+$color-gold: #D4AF37;
+
+body {
+  background-color: $color-black;
+  background-image: radial-gradient(circle at 50% 0%, #1a2e1a 0%, $color-black 70%);
+}
+
+::selection {
+  background-color: $color-matcha;
+  color: $color-black;
+}
+
+// Custom Scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $color-black; 
+}
+ 
+::-webkit-scrollbar-thumb {
+  background: #333; 
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: $color-gold; 
+}
+
+// Utility to force hardware acceleration on animated elements
+.transform-gpu {
+  transform: translate3d(0,0,0);
+}
+
+// Matcha Glow Effects
+.glow-matcha {
+  box-shadow: 0 0 15px rgba($color-matcha, 0.3);
+}
+
+.glow-gold {
+  box-shadow: 0 0 15px rgba($color-gold, 0.3);
+}
+
+// Text Gradients
+.text-gradient-matcha {
+  background: linear-gradient(to right, $color-matcha, lighten($color-matcha, 20%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(to right, $color-gold, lighten($color-gold, 20%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

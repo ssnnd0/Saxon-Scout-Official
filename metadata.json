@@ -1,0 +1,7 @@
+{
+  "name": "SaxonScout 2026",
+  "description": "Scouting app for FRC Team 611 (Langley Saxons) and 526 (Saxon Sparks).",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
