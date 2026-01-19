@@ -9,14 +9,13 @@ export const KEYBINDS = {
 };
 
 export const ZONES = [
-  // Blue Alliance (Zones on Left)
-  // Adjusted height to fit 100% viewbox (0-100) with margins
-  { id: 'blue-1', label: 'Blue Left', x: 10, y: 4, w: 25, h: 28, color: 'blue' },
-  { id: 'blue-2', label: 'Blue Center', x: 10, y: 36, w: 25, h: 28, color: 'blue' },
-  { id: 'blue-3', label: 'Blue Right', x: 10, y: 68, w: 25, h: 28, color: 'blue' },
+  // Blue Alliance (Zones on Left - 0 to 50 range in viewbox)
+  { id: 'blue-1', label: 'Blue Left', x: 8, y: 4, w: 30, h: 28, color: 'blue' },
+  { id: 'blue-2', label: 'Blue Center', x: 8, y: 36, w: 30, h: 28, color: 'blue' },
+  { id: 'blue-3', label: 'Blue Right', x: 8, y: 68, w: 30, h: 28, color: 'blue' },
   
-  // Red Alliance (Zones on Right)
-  { id: 'red-1', label: 'Red Left', x: 65, y: 4, w: 25, h: 28, color: 'red' },
-  { id: 'red-2', label: 'Red Center', x: 65, y: 36, w: 25, h: 28, color: 'red' },
-  { id: 'red-3', label: 'Red Right', x: 65, y: 68, w: 25, h: 28, color: 'red' },
+  // Red Alliance (Zones on Right - 50 to 100 range in viewbox)
+  { id: 'red-1', label: 'Red Left', x: 62, y: 4, w: 30, h: 28, color: 'red' },
+  { id: 'red-2', label: 'Red Center', x: 62, y: 36, w: 30, h: 28, color: 'red' },
+  { id: 'red-3', label: 'Red Right', x: 62, y: 68, w: 30, h: 28, color: 'red' },
 ];
