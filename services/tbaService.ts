@@ -3,6 +3,16 @@ import { Team, TBAMatch, ScheduledMatch } from "../types";
 
 const BASE_URL = "https://www.thebluealliance.com/api/v3";
 
+export interface TBATeamDetails {
+  city: string;
+  country: string;
+  nickname: string;
+  state_prov: string;
+  team_number: number;
+  school_name?: string;
+  motto?: string;
+}
+
 export const fetchMatchSchedule = async (): Promise<TBAMatch[]> => {
   const { tbaApiKey, eventYear, eventCode } = getSettings();
   const eventKey = `${eventYear}${eventCode}`;
@@ -25,7 +35,7 @@ export const fetchMatchSchedule = async (): Promise<TBAMatch[]> => {
     const scheduledMatches: ScheduledMatch[] = data
       .filter(m => m.comp_level === 'qm') // Filter for qualification matches
       .map(m => {
-        const teams = [];
+        const teams: any[] = [];
         
         m.alliances.red.team_keys.forEach((key, index) => {
            teams.push({
@@ -44,12 +54,13 @@ export const fetchMatchSchedule = async (): Promise<TBAMatch[]> => {
          });
 
         return {
-          description: `${m.comp_level} ${m.match_number}`,
+          description: `Quals ${m.match_number}`,
           matchNumber: m.match_number,
           tournamentLevel: 'Qualification',
           teams: teams
         };
-      });
+      })
+      .sort((a, b) => a.matchNumber - b.matchNumber);
 
     saveSchedule(scheduledMatches);
     return data; 
@@ -87,5 +98,22 @@ export const fetchEventTeams = async (): Promise<Team[]> => {
   } catch (error) {
     console.error(error);
     return [];
+  }
+};
+
+export const fetchTeamDetails = async (teamNumber: string): Promise<TBATeamDetails | null> => {
+  const { tbaApiKey } = getSettings();
+  if (!tbaApiKey) return null;
+
+  try {
+    const response = await fetch(`${BASE_URL}/team/frc${teamNumber}/simple`, {
+      headers: {
+        'X-TBA-Auth-Key': tbaApiKey
+      }
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (e) {
+    return null;
   }
 };

@@ -171,11 +171,70 @@ export const Scoring: React.FC<ScoringProps> = ({ phase, matchData, setMatchData
         </div>
       </div>
 
-      {/* Main Control Grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 p-3 md:p-6 bg-slate-100 dark:bg-gradient-to-b dark:from-slate-900 dark:to-obsidian transition-colors">
+      {/* Main Control Layout - Mobile Optimized (Flex Col) vs Desktop Grid */}
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-2 md:gap-3 p-2 md:p-6 bg-slate-100 dark:bg-gradient-to-b dark:from-slate-900 dark:to-obsidian transition-colors overflow-hidden">
         
-        {/* Left: Intake Controls (Thumb Friendly) */}
-        <div className="order-2 md:order-1 col-span-1 md:col-span-3 flex flex-row md:flex-col gap-3">
+        {/* === SCORE SECTION (Top on Mobile) === */}
+        {/* Mobile: Grows to fill upper space. Desktop: Center Col */}
+        <div className="flex-[2] md:col-span-6 md:order-2 flex flex-col gap-2 relative min-h-0">
+             {/* SCORE Button - Huge Target */}
+             <button 
+                onClick={() => addEvent('Score', GamePiece.Fuel, 'Hub')}
+                className="flex-1 rounded-3xl bg-matcha hover:bg-matcha-dark active:bg-matcha-dark/90 text-obsidian shadow-[0_0_30px_rgba(168,198,108,0.2)] border-4 border-matcha-light/30 transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-2 relative overflow-hidden group w-full"
+            >
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <Target size={80} strokeWidth={2.5} className="drop-shadow-lg" />
+                <span className="text-4xl md:text-6xl font-black tracking-tighter drop-shadow-md">SCORE</span>
+                <span className="absolute top-4 right-6 text-2xl font-black opacity-50">{scoreHubCount}</span>
+            </button>
+
+            {/* Desktop Only Miss Button (Hidden on Mobile here, moves to middle row) */}
+            <div className="hidden md:block">
+                 <button 
+                    onClick={() => addEvent('Miss', GamePiece.Fuel, 'Hub')}
+                    className="w-full h-24 rounded-2xl bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 border-2 border-red-200 dark:border-red-500/30 text-red-800 dark:text-red-200 flex items-center justify-center gap-4 transition-all active:scale-[0.98]"
+                >
+                    <AlertCircle size={32} />
+                    <div className="text-left">
+                        <span className="block text-2xl font-black tracking-wide">MISS</span>
+                        <span className="block text-xs font-bold opacity-70">RECORD FAILURE</span>
+                    </div>
+                    <div className="ml-4 text-3xl font-black opacity-50">{missHubCount}</div>
+                </button>
+            </div>
+        </div>
+
+        {/* === MIDDLE ROW (Mobile Only) === */}
+        {/* Contains Miss and Modifiers side-by-side */}
+        <div className="flex-none h-24 flex md:hidden gap-2">
+            <button 
+                onClick={() => addEvent('Miss', GamePiece.Fuel, 'Hub')}
+                className="flex-1 rounded-2xl bg-red-100 dark:bg-red-900/40 border-2 border-red-200 dark:border-red-500/30 text-red-800 dark:text-red-200 flex flex-col items-center justify-center active:scale-[0.98]"
+            >
+                 <span className="text-2xl font-black">MISS</span>
+                 <span className="text-xs font-bold opacity-70">{missHubCount}</span>
+            </button>
+
+            {/* Mobile Modifier Slot */}
+            {isAuto ? (
+                 <button 
+                    className={`flex-1 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all active:scale-[0.98] ${matchData.leaveLine ? 'bg-matcha/20 border-matcha text-matcha-dark dark:text-matcha' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                    onClick={() => setMatchData(prev => ({...prev, leaveLine: !prev.leaveLine}))}
+                >
+                    {matchData.leaveLine ? <CheckSquare size={24} /> : <XSquare size={24} />}
+                    <span className="font-black text-xs uppercase text-center leading-tight">Leave<br/>Line</span>
+                 </button>
+            ) : (
+                <div className="flex-1 bg-white/50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600">
+                    <Target size={20} className="opacity-20 mb-1"/>
+                    <span className="text-[10px] font-bold text-center">FOCUS</span>
+                </div>
+            )}
+        </div>
+
+
+        {/* === INTAKE SECTION (Bottom Left on Mobile) === */}
+        <div className="flex-1 md:flex-none md:col-span-3 md:order-1 flex flex-row md:flex-col gap-2 md:gap-3 min-h-0">
             <Button 
                 onClick={() => addEvent('Pickup', GamePiece.Fuel, 'Ground')}
                 className="flex-1 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl flex flex-col items-center justify-center gap-2 group relative active:scale-95 transition-all shadow-sm"
@@ -194,80 +253,56 @@ export const Scoring: React.FC<ScoringProps> = ({ phase, matchData, setMatchData
             </Button>
         </div>
 
-        {/* Center: Primary Scoring Loop (Focus Area) */}
-        <div className="order-1 md:order-2 col-span-1 md:col-span-6 flex flex-col gap-3">
-             {/* SCORE Button - Huge Target */}
-             <button 
-                onClick={() => addEvent('Score', GamePiece.Fuel, 'Hub')}
-                className="flex-grow rounded-3xl bg-matcha hover:bg-matcha-dark active:bg-matcha-dark/90 text-obsidian shadow-[0_0_30px_rgba(168,198,108,0.2)] border-4 border-matcha-light/30 transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-2 relative overflow-hidden group"
-            >
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <Target size={80} strokeWidth={2.5} className="drop-shadow-lg" />
-                <span className="text-4xl md:text-6xl font-black tracking-tighter drop-shadow-md">SCORE</span>
-                <span className="absolute top-4 right-6 text-2xl font-black opacity-50">{scoreHubCount}</span>
-            </button>
+        {/* === RIGHT/BOTTOM MODIFIERS & NEXT === */}
+        <div className="flex-none md:col-span-3 md:order-3 flex flex-row md:flex-col gap-2 md:gap-3 h-16 md:h-auto">
+            {/* Desktop Modifiers (Hidden on Mobile, shown in middle row) */}
+            <div className="hidden md:flex flex-1 flex-col gap-3">
+                 {isAuto ? (
+                     <>
+                        <button 
+                            className={`flex-1 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${matchData.leaveLine ? 'bg-matcha/20 border-matcha text-matcha-dark dark:text-matcha shadow-lg shadow-matcha/10' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                            onClick={() => setMatchData(prev => ({...prev, leaveLine: !prev.leaveLine}))}
+                        >
+                            {matchData.leaveLine ? <CheckSquare size={28} /> : <XSquare size={28} />}
+                            <span className="font-black text-sm uppercase">Leave Line</span>
+                        </button>
 
-            {/* MISS Button - Accessibility below */}
-            <button 
-                onClick={() => addEvent('Miss', GamePiece.Fuel, 'Hub')}
-                className="h-24 md:h-32 rounded-2xl bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 border-2 border-red-200 dark:border-red-500/30 text-red-800 dark:text-red-200 flex items-center justify-center gap-4 transition-all active:scale-[0.98]"
-            >
-                <AlertCircle size={32} />
-                <div className="text-left">
-                    <span className="block text-2xl font-black tracking-wide">MISS</span>
-                    <span className="block text-xs font-bold opacity-70">RECORD FAILURE</span>
-                </div>
-                <div className="ml-4 text-3xl font-black opacity-50">{missHubCount}</div>
-            </button>
-        </div>
-
-        {/* Right: Modifiers & Status */}
-        <div className="order-3 md:order-3 col-span-1 md:col-span-3 flex flex-row md:flex-col gap-3">
-            {isAuto ? (
-                <div className="flex-1 flex flex-col gap-3">
-                     <button 
-                        className={`flex-1 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${matchData.leaveLine ? 'bg-matcha/20 border-matcha text-matcha-dark dark:text-matcha shadow-lg shadow-matcha/10' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}
-                        onClick={() => setMatchData(prev => ({...prev, leaveLine: !prev.leaveLine}))}
-                    >
-                        {matchData.leaveLine ? <CheckSquare size={28} /> : <XSquare size={28} />}
-                        <span className="font-black text-sm uppercase">Leave Line</span>
-                     </button>
-
-                     <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-2 flex flex-col">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase text-center mb-1">Auto Climb</span>
-                        <div className="flex-1 flex gap-1">
-                            <button 
-                                onClick={() => setMatchData(prev => ({...prev, autoTowerLevel: 'Level 1'}))}
-                                className={`flex-1 rounded-lg font-bold text-xs transition-colors ${matchData.autoTowerLevel === 'Level 1' ? 'bg-matcha text-obsidian' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                            >
-                                L1
-                            </button>
-                            <button 
-                                onClick={() => setMatchData(prev => ({...prev, autoTowerLevel: 'Failed'}))}
-                                className={`flex-1 rounded-lg font-bold text-xs transition-colors ${matchData.autoTowerLevel === 'Failed' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                            >
-                                FAIL
-                            </button>
-                        </div>
-                     </div>
-                </div>
-            ) : (
-                <div className="flex-1 bg-white/50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 p-4">
-                    <Target size={32} className="opacity-20 mb-2"/>
-                    <span className="text-xs font-bold text-center">FOCUS ON<br/>ACCURACY</span>
-                </div>
-            )}
+                         <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-2 flex flex-col">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase text-center mb-1">Auto Climb</span>
+                            <div className="flex-1 flex gap-1">
+                                <button 
+                                    onClick={() => setMatchData(prev => ({...prev, autoTowerLevel: 'Level 1'}))}
+                                    className={`flex-1 rounded-lg font-bold text-xs transition-colors ${matchData.autoTowerLevel === 'Level 1' ? 'bg-matcha text-obsidian' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                >
+                                    L1
+                                </button>
+                                <button 
+                                    onClick={() => setMatchData(prev => ({...prev, autoTowerLevel: 'Failed'}))}
+                                    className={`flex-1 rounded-lg font-bold text-xs transition-colors ${matchData.autoTowerLevel === 'Failed' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                >
+                                    FAIL
+                                </button>
+                            </div>
+                         </div>
+                     </>
+                ) : (
+                    <div className="flex-1 bg-white/50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 p-4">
+                        <Target size={32} className="opacity-20 mb-2"/>
+                        <span className="text-xs font-bold text-center">FOCUS ON<br/>ACCURACY</span>
+                    </div>
+                )}
+            </div>
             
-            {/* Advance Button (Mobile: Full Width Bottom, Desktop: Bottom Right) */}
+            {/* Advance Button */}
             <Button 
                 variant={timerWarning ? 'danger' : 'primary'} 
-                className={`h-20 md:h-auto md:flex-1 text-xl font-black shadow-lg ${timerWarning ? 'animate-pulse' : ''}`}
+                className={`w-full h-full md:h-auto md:flex-1 text-xl font-black shadow-lg ${timerWarning ? 'animate-pulse' : ''}`}
                 onClick={() => {
                     setLastAction('');
                     setView(isAuto ? 'TELEOP_SCORING' : 'ENDGAME_SCORING');
                 }}
             >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2">
                     {isAuto ? 'TELEOP' : 'ENDGAME'} <ArrowRight size={24} strokeWidth={3} />
                 </div>
             </Button>
