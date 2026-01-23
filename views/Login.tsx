@@ -39,7 +39,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       {/* Image Background - Optimized size */}
       <div className="absolute inset-0 z-0">
          <img 
-            src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=70&w=1280&auto=format&fit=crop" 
+            src="https://images.squarespace-cdn.com/content/v1/6885124a98afac55ac8d915a/b43a8f5b-f523-4fb2-9bfe-01f6824b97ed/Langley+High+Team+611+Banner.png?format=1000w&auto=format&fit=crop"
             alt="Background" 
             className="w-full h-full object-cover opacity-30"
             loading="eager"
