@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ViewState } from '../types';
-import { Menu, X, Home, Target, Settings, Database, List, LogOut } from 'lucide-react';
+import { Home, Target, Settings, Database, List, LogOut, ClipboardList } from 'lucide-react';
 
 interface NavigationProps {
   setView: (view: ViewState) => void;
@@ -11,20 +11,17 @@ interface NavigationProps {
 }
 
 export const Navigation: React.FC<NavigationProps> = ({ setView, currentView, onLogout, user, variant = 'mobile' }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleNav = (view: ViewState) => {
-    setView(view);
-    setIsOpen(false);
-  };
-
+  
   const navItems = [
-    { view: 'DASHBOARD' as ViewState, label: 'Dashboard', icon: <Home size={20} /> },
-    { view: 'GAME_START' as ViewState, label: 'Scout Match', icon: <Target size={20} /> },
-    { view: 'PICKLIST' as ViewState, label: 'Picklist', icon: <List size={20} /> },
-    { view: 'DATA_VIEW' as ViewState, label: 'Data Analysis', icon: <Database size={20} /> },
-    { view: 'SETTINGS' as ViewState, label: 'Settings', icon: <Settings size={20} /> },
+    { view: 'DASHBOARD' as ViewState, label: 'Home', icon: <Home size={22} /> },
+    { view: 'GAME_START' as ViewState, label: 'Scout', icon: <Target size={22} /> },
+    { view: 'PIT_SCOUTING' as ViewState, label: 'Pit', icon: <ClipboardList size={22} /> },
+    { view: 'DATA_VIEW' as ViewState, label: 'Data', icon: <Database size={22} /> },
+    { view: 'SETTINGS' as ViewState, label: 'Config', icon: <Settings size={22} /> },
   ];
+
+  // Immersive views where we hide the bottom nav to prevent accidents
+  const hideMobileNav = ['AUTO_START', 'AUTO_SCORING', 'TELEOP_SCORING', 'ENDGAME_SCORING'].includes(currentView);
 
   if (variant === 'sidebar') {
     return (
@@ -46,7 +43,7 @@ export const Navigation: React.FC<NavigationProps> = ({ setView, currentView, on
              {navItems.map((item) => (
                 <button
                     key={item.view}
-                    onClick={() => handleNav(item.view)}
+                    onClick={() => setView(item.view)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all font-bold text-sm ${
                         currentView === item.view 
                             ? 'bg-matcha text-obsidian shadow-md shadow-matcha/20' 
@@ -57,6 +54,17 @@ export const Navigation: React.FC<NavigationProps> = ({ setView, currentView, on
                     {item.label}
                 </button>
              ))}
+              <button
+                onClick={() => setView('PICKLIST')}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all font-bold text-sm ${
+                    currentView === 'PICKLIST'
+                        ? 'bg-matcha text-obsidian shadow-md shadow-matcha/20' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                }`}
+            >
+                <List size={22} />
+                Picklist
+            </button>
          </div>
 
          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-black/20">
@@ -85,72 +93,30 @@ export const Navigation: React.FC<NavigationProps> = ({ setView, currentView, on
     );
   }
 
-  // Mobile Variant (Original Floating Button + Modal)
+  // Mobile Bottom Navigation Bar
+  if (hideMobileNav) return null;
+
   return (
-    <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 p-4 bg-matcha hover:bg-matcha-dark text-obsidian rounded-full shadow-lg shadow-matcha/30 transition-transform hover:scale-105 active:scale-95"
-        aria-label="Open Navigation"
-      >
-        <Menu size={28} />
-      </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsOpen(false)}
-          ></div>
-
-          <div className="relative w-full max-w-sm bg-white dark:bg-obsidian-light border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white">MENU</h2>
-                    {user && <p className="text-sm text-slate-500 font-bold">Logged in as {user}</p>}
+    <div className="fixed bottom-0 left-0 right-0 h-20 bg-white/90 dark:bg-obsidian-light/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-50 px-4 pb-4 pt-2">
+       <div className="flex justify-between items-center h-full max-w-md mx-auto">
+          {navItems.map((item) => {
+            const isActive = currentView === item.view;
+            return (
+              <button
+                key={item.view}
+                onClick={() => setView(item.view)}
+                className={`flex flex-col items-center justify-center gap-1 w-16 h-full transition-all duration-200 ${isActive ? 'text-matcha' : 'text-slate-400 dark:text-slate-500'}`}
+              >
+                <div className={`p-1.5 rounded-full transition-all ${isActive ? 'bg-matcha/10 -translate-y-1' : ''}`}>
+                    {item.icon}
                 </div>
-                <button 
-                    onClick={() => setIsOpen(false)}
-                    className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-                >
-                    <X size={24} />
-                </button>
-            </div>
-
-            <div className="p-4 space-y-2 overflow-y-auto flex-1">
-                {navItems.map((item) => (
-                    <button
-                        key={item.view}
-                        onClick={() => handleNav(item.view)}
-                        className={`w-full p-4 rounded-xl flex items-center gap-4 transition-all ${
-                            currentView === item.view 
-                                ? 'bg-matcha text-obsidian shadow-lg shadow-matcha/20 font-bold' 
-                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-                        }`}
-                    >
-                        {item.icon}
-                        <span className="text-lg">{item.label}</span>
-                    </button>
-                ))}
-            </div>
-
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-black/20">
-                {onLogout && (
-                     <button
-                        onClick={() => {
-                            onLogout();
-                            setIsOpen(false);
-                        }}
-                        className="w-full p-4 rounded-xl flex items-center justify-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors font-bold"
-                     >
-                        <LogOut size={20} />
-                        Sign Out
-                     </button>
-                )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+                <span className={`text-[10px] font-bold ${isActive ? 'opacity-100' : 'opacity-0'}`}>
+                    {item.label}
+                </span>
+              </button>
+            )
+          })}
+       </div>
+    </div>
   );
 };
