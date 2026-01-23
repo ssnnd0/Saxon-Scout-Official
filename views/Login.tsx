@@ -41,10 +41,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
          <img 
             src="https://images.squarespace-cdn.com/content/v1/6885124a98afac55ac8d915a/b43a8f5b-f523-4fb2-9bfe-01f6824b97ed/Langley+High+Team+611+Banner.png?format=1000w&auto=format&fit=crop"
             alt="Background" 
-            className="w-full h-full object-cover opacity-30"
+            className="w-full h-full object-cover opacity-80"
             loading="eager"
          />
-         <div className="absolute inset-0 bg-gradient-to-b from-obsidian/60 via-obsidian/80 to-obsidian"></div>
+         <div className="absolute inset-0 bg-gradient-to-b from-obsidian/40 via-obsidian/70 to-obsidian"></div>
       </div>
 
       {/* Decorative background elements (Subtle glow behind the form) */}
