@@ -27,7 +27,7 @@ export enum Alliance {
   Blue = 'Blue'
 }
 
-export type ViewState = 'LOGIN' | 'DASHBOARD' | 'SETTINGS' | 'MATCH_DATA' | 'GAME_START' | 'AUTO_START' | 'AUTO_SCORING' | 'TELEOP_SCORING' | 'ENDGAME_SCORING' | 'SUMMARY' | 'DATA_VIEW' | 'PICKLIST';
+export type ViewState = 'LOGIN' | 'DASHBOARD' | 'SETTINGS' | 'MATCH_DATA' | 'GAME_START' | 'AUTO_START' | 'AUTO_SCORING' | 'TELEOP_SCORING' | 'ENDGAME_SCORING' | 'SUMMARY' | 'DATA_VIEW' | 'PICKLIST' | 'PIT_SCOUTING';
 
 export interface MatchData {
   id: string;
@@ -62,11 +62,49 @@ export interface MatchData {
   defensePlayed: boolean;
   robotDied: boolean;
   comments: string;
+  
+  // Endgame additional
+  climbDuration?: number;
+  climbPosition?: string;
+  crossedBump?: boolean;
+  underTrench?: boolean;
+  
+  // Strategy
+  autoStrategy?: string;
+  teleopStrategy?: string;
+  attackDuration?: number;
+  defenseDuration?: number;
+  feedingDuration?: number;
 
   // Timeline
   events: GameEvent[];
   autoEvents: GameEvent[];
   teleopEvents: GameEvent[];
+}
+
+export interface PitData {
+  teamNumber: string;
+  lastModified: number;
+  scouterName: string;
+  drivetrain: string;
+  motors: string;
+  weight: string;
+  batteries: string;
+  bump: boolean;
+  trench: boolean;
+  climb: string;
+  archetype: string;
+  experience: string;
+  intake: string;
+  ballCapacity: string;
+  preload: string;
+  shooters: string;
+  canFeed: boolean;
+  minDist: string;
+  maxDist: string;
+  bps: string;
+  autoAlign: boolean;
+  notes: string;
 }
 
 export interface TeamAggregate {

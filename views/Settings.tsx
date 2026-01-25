@@ -38,37 +38,41 @@ export const Settings: React.FC<SettingsProps> = ({ setView }) => {
   const [newUser, setNewUser] = useState({ username: '', pin: '', role: 'scout' as const });
 
   useEffect(() => {
-    // Auth Check
-    const u = localStorage.getItem('saxon_user');
-    setCurrentUser(u);
-    
-    // Determine Role
-    const localUsers = getLocalUsers();
-    const localUser = localUsers.find(lu => lu.username === u);
-    const isEnvAdmin = u === 'admin';
-    const isLocalAdmin = localUser?.role === 'admin';
-    
-    setIsAdmin(isEnvAdmin || isLocalAdmin);
-    setUsers(localUsers);
+    const initSettings = async () => {
+      // Auth Check
+      const u = localStorage.getItem('saxon_user');
+      setCurrentUser(u);
+      
+      // Determine Role
+      const localUsers = getLocalUsers();
+      const localUser = localUsers.find(lu => lu.username === u);
+      const isEnvAdmin = u === 'admin';
+      const isLocalAdmin = localUser?.role === 'admin';
+      
+      setIsAdmin(isEnvAdmin || isLocalAdmin);
+      setUsers(localUsers);
 
-    // Load Prefs
-    const loadedPrefs = getUserPreferences();
-    setPrefs(loadedPrefs);
+      // Load Prefs
+      const loadedPrefs = getUserPreferences();
+      setPrefs(loadedPrefs);
 
-    // Load Stats
-    const matches = getMatches();
-    const myMatches = matches.filter(m => m.scoutName === u);
-    setStats({ matchesScouted: myMatches.length });
+      // Load Stats
+      const matches = await getMatches();
+      const myMatches = matches.filter(m => m.scoutName === u);
+      setStats({ matchesScouted: myMatches.length });
 
-    // Load Admin Settings
-    const s = getSettings();
-    setUsername(s.frcApiUsername);
-    setToken(s.frcApiToken);
-    setTbaKey(s.tbaApiKey || '');
-    setYear(s.eventYear);
-    setEventCode(s.eventCode);
-    setSyncUrl(s.syncServerUrl || '');
-    updateCacheStatus();
+      // Load Admin Settings
+      const s = getSettings();
+      setUsername(s.frcApiUsername);
+      setToken(s.frcApiToken);
+      setTbaKey(s.tbaApiKey || '');
+      setYear(s.eventYear);
+      setEventCode(s.eventCode);
+      setSyncUrl(s.syncServerUrl || '');
+      updateCacheStatus();
+    };
+
+    initSettings();
   }, []);
 
   const updateCacheStatus = () => {

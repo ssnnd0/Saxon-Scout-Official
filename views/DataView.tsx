@@ -34,8 +34,8 @@ export const DataView: React.FC<DataViewProps> = ({ setView }) => {
   const [modalTab, setModalTab] = useState<'overview' | 'specs'>('overview');
 
   useEffect(() => {
-    const loadData = () => {
-        setMatches(getMatches());
+    const loadData = async () => {
+        setMatches(await getMatches());
         setCachedTeams(getTeams());
         setAllPitData(getPitData());
     };

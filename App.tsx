@@ -15,6 +15,7 @@ const Endgame = lazy(() => import('./views/Endgame').then(module => ({ default: 
 const Summary = lazy(() => import('./views/Summary').then(module => ({ default: module.Summary })));
 const DataView = lazy(() => import('./views/DataView').then(module => ({ default: module.DataView })));
 const Picklist = lazy(() => import('./views/Picklist').then(module => ({ default: module.Picklist })));
+const PitScouting = lazy(() => import('./views/PitScouting').then(module => ({ default: module.PitScouting })));
 
 const initialMatchData: MatchData = {
   id: '',
@@ -179,6 +180,8 @@ const App: React.FC = () => {
         return <DataView setView={setView} />;
       case 'PICKLIST':
         return <Picklist setView={setView} />;
+      case 'PIT_SCOUTING':
+        return <PitScouting setView={setView} />;
       default:
         return <Dashboard setView={setView} user={user} onLogout={handleLogout} />;
     }

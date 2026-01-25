@@ -1,4 +1,4 @@
-import { MatchData, AppSettings, RankedTeam, Team, ScheduledMatch, LocalUser, UserPreferences } from '../types';
+import { MatchData, AppSettings, RankedTeam, Team, ScheduledMatch, LocalUser, UserPreferences, PitData } from '../types';
 
 const STORAGE_KEY = 'saxon_scout_data';
 const SCHEDULE_KEY = 'saxon_scout_schedule';
@@ -7,9 +7,18 @@ const SETTINGS_KEY = 'saxon_scout_settings';
 const PICKLIST_KEY = 'saxon_scout_picklist';
 const USERS_KEY = 'saxon_scout_users';
 const PREFS_KEY = 'saxon_preferences';
+const PIT_DATA_KEY = 'saxon_pit_data';
 
-export const saveMatch = (data: MatchData) => {
-  const current = getMatches();
+// SQL Server Connection (placeholder)
+export const connectToSQLServer = async () => {
+  // TODO: Implement actual SQL Server connection
+  // For now, this is a placeholder that returns null
+  return null;
+};
+
+export const saveMatch = async (data: MatchData) => {
+  // TODO: Save data to SQL Server
+  const current = await getMatches();
   const matchToSave = { ...data, lastModified: data.lastModified || Date.now() };
   
   const existingIndex = current.findIndex(m => m.id === matchToSave.id);
@@ -25,8 +34,8 @@ export const saveMatch = (data: MatchData) => {
   return matchToSave;
 };
 
-export const mergeMatches = (remoteMatches: MatchData[]) => {
-  const localMatches = getMatches();
+export const mergeMatches = async (remoteMatches: MatchData[]) => {
+  const localMatches = await getMatches();
   let hasChanges = false;
 
   remoteMatches.forEach(remoteMatch => {
@@ -49,7 +58,8 @@ export const mergeMatches = (remoteMatches: MatchData[]) => {
   return localMatches;
 };
 
-export const getMatches = (): MatchData[] => {
+export const getMatches = async (): Promise<MatchData[]> => {
+  // TODO: Retrieve matches from SQL Server
   const raw = localStorage.getItem(STORAGE_KEY);
   return raw ? JSON.parse(raw) : [];
 };
@@ -131,4 +141,25 @@ export const exportData = () => {
   a.download = `saxon_data_${new Date().toISOString()}.json`;
   a.click();
   URL.revokeObjectURL(url);
+};
+
+export const getPitData = (): PitData[] => {
+  const raw = localStorage.getItem(PIT_DATA_KEY);
+  return raw ? JSON.parse(raw) : [];
+};
+
+export const savePitData = (data: PitData) => {
+  const current = getPitData();
+  const pitDataToSave = { ...data, lastModified: data.lastModified || Date.now() };
+  
+  const existingIndex = current.findIndex(p => p.teamNumber === pitDataToSave.teamNumber);
+  let updated;
+  if (existingIndex >= 0) {
+    updated = [...current];
+    updated[existingIndex] = pitDataToSave;
+  } else {
+    updated = [...current, pitDataToSave];
+  }
+  localStorage.setItem(PIT_DATA_KEY, JSON.stringify(updated));
+  return pitDataToSave;
 };

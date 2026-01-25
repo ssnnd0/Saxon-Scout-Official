@@ -16,8 +16,8 @@ export const Endgame: React.FC<EndgameProps> = ({ matchData, setMatchData, setVi
     setMatchData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleFinish = () => {
-    const savedMatch = saveMatch(matchData);
+  const handleFinish = async () => {
+    const savedMatch = await saveMatch(matchData);
     syncService.uploadMatch(savedMatch);
     setView('SUMMARY');
   };

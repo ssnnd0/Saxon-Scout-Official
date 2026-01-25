@@ -19,8 +19,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ setView, user, onLogout })
   const [lastMatch, setLastMatch] = useState<any>(null);
 
   useEffect(() => {
-    const refreshData = () => {
-        const matches = getMatches();
+    const refreshData = async () => {
+        const matches = await getMatches();
         setMatchCount(matches.length);
         if (matches.length > 0) {
             setLastMatch(matches[matches.length - 1]);

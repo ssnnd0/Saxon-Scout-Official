@@ -11,44 +11,48 @@ export const Picklist: React.FC<PicklistProps> = ({ setView }) => {
   const [rankings, setRankings] = useState<RankedTeam[]>([]);
 
   useEffect(() => {
-    const saved = getPicklist();
-    if (saved.length > 0) {
-      setRankings(saved);
-    } else {
-      // Auto-generate initial rankings based on average score
-      const matches = getMatches();
-      const teams = Array.from(new Set(matches.map(m => m.teamNumber)));
-      const stats = teams.map(team => {
-        const teamMatches = matches.filter(m => m.teamNumber === team);
-        
-        // Calculate average Total Score
-        const totalScore = teamMatches.reduce((acc, m) => {
-            let score = (m.autoFuelScored * 1) + (m.teleopFuelScored * 1);
-            if (m.autoTowerLevel === 'Level 1') score += 15;
-            if (m.endgameTowerLevel === 'Level 1') score += 10;
-            if (m.endgameTowerLevel === 'Level 2') score += 20;
-            if (m.endgameTowerLevel === 'Level 3') score += 30;
-            return acc + score;
-        }, 0);
-        
-        // Fuel only avg
-        const totalFuel = teamMatches.reduce((acc, m) => acc + m.autoFuelScored + m.teleopFuelScored, 0);
+    const initPicklist = async () => {
+      const saved = getPicklist();
+      if (saved.length > 0) {
+        setRankings(saved);
+      } else {
+        // Auto-generate initial rankings based on average score
+        const matches = await getMatches();
+        const teams = Array.from(new Set(matches.map(m => m.teamNumber)));
+        const stats = teams.map(team => {
+          const teamMatches = matches.filter(m => m.teamNumber === team);
+          
+          // Calculate average Total Score
+          const totalScore = teamMatches.reduce((acc, m) => {
+              let score = (m.autoFuelScored * 1) + (m.teleopFuelScored * 1);
+              if (m.autoTowerLevel === 'Level 1') score += 15;
+              if (m.endgameTowerLevel === 'Level 1') score += 10;
+              if (m.endgameTowerLevel === 'Level 2') score += 20;
+              if (m.endgameTowerLevel === 'Level 3') score += 30;
+              return acc + score;
+          }, 0);
+          
+          // Fuel only avg
+          const totalFuel = teamMatches.reduce((acc, m) => acc + m.autoFuelScored + m.teleopFuelScored, 0);
 
-        return {
-            teamNumber: team,
-            avg: teamMatches.length ? totalScore / teamMatches.length : 0,
-            avgFuel: teamMatches.length ? totalFuel / teamMatches.length : 0
-        };
-      });
-      
-      const sorted = stats.sort((a, b) => b.avg - a.avg).map((s, i) => ({
-          teamNumber: s.teamNumber,
-          rank: i + 1,
-          notes: `Avg Score: ${s.avg.toFixed(1)} | Avg Fuel: ${s.avgFuel.toFixed(1)}`,
-          avgFuel: s.avgFuel
-      }));
-      setRankings(sorted);
-    }
+          return {
+              teamNumber: team,
+              avg: teamMatches.length ? totalScore / teamMatches.length : 0,
+              avgFuel: teamMatches.length ? totalFuel / teamMatches.length : 0
+          };
+        });
+        
+        const sorted = stats.sort((a, b) => b.avg - a.avg).map((s, i) => ({
+            teamNumber: s.teamNumber as string,
+            rank: i + 1,
+            notes: `Avg Score: ${s.avg.toFixed(1)} | Avg Fuel: ${s.avgFuel.toFixed(1)}`,
+            avgFuel: s.avgFuel
+        }));
+        setRankings(sorted);
+      }
+    };
+    
+    initPicklist();
   }, []);
 
   const move = (index: number, direction: -1 | 1) => {
