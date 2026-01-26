@@ -1,0 +1,5 @@
+c:\Users\Sandro\Documents\GitHub\Saxon-Scout-Official\data\saxon_scout\bin\Debug\saxon_scout.dacpac
+c:\Users\Sandro\Documents\GitHub\Saxon-Scout-Official\data\saxon_scout\obj\Debug\Model.xml
+c:\Users\Sandro\Documents\GitHub\Saxon-Scout-Official\data\saxon_scout\obj\Debug\refactor.xml
+c:\Users\Sandro\Documents\GitHub\Saxon-Scout-Official\data\saxon_scout\obj\Debug\postdeploy.sql
+c:\Users\Sandro\Documents\GitHub\Saxon-Scout-Official\data\saxon_scout\obj\Debug\predeploy.sql

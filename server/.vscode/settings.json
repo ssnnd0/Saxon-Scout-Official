@@ -1,0 +1,9 @@
+{
+  "[sql]": {
+    "editor.defaultFormatter": "ms-mssql.mssql"
+  },
+  "mssql.linter.enabled": false,
+  "mssql.linter.excludeSchemas": [],
+  "sql.linter.ignoreParsedStatements": true,
+  "sql.dialect": "PostgreSQL"
+}

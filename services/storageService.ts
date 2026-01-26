@@ -9,15 +9,36 @@ const USERS_KEY = 'saxon_scout_users';
 const PREFS_KEY = 'saxon_preferences';
 const PIT_DATA_KEY = 'saxon_pit_data';
 
-// SQL Server Connection (placeholder)
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+// API connection helper
 export const connectToSQLServer = async () => {
-  // TODO: Implement actual SQL Server connection
-  // For now, this is a placeholder that returns null
-  return null;
+  try {
+    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`);
+    return response.ok;
+  } catch (err) {
+    console.error('Failed to connect to server:', err);
+    return false;
+  }
 };
 
 export const saveMatch = async (data: MatchData) => {
-  // TODO: Save data to SQL Server
+  try {
+    // Try to save to server first
+    const response = await fetch(`${API_BASE_URL}/matches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (err) {
+    console.warn('Server unavailable, falling back to localStorage');
+  }
+
+  // Fallback to localStorage
   const current = await getMatches();
   const matchToSave = { ...data, lastModified: data.lastModified || Date.now() };
   
@@ -59,7 +80,17 @@ export const mergeMatches = async (remoteMatches: MatchData[]) => {
 };
 
 export const getMatches = async (): Promise<MatchData[]> => {
-  // TODO: Retrieve matches from SQL Server
+  try {
+    // Try to fetch from server first
+    const response = await fetch(`${API_BASE_URL}/matches`);
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (err) {
+    console.warn('Server unavailable, using localStorage');
+  }
+
+  // Fallback to localStorage
   const raw = localStorage.getItem(STORAGE_KEY);
   return raw ? JSON.parse(raw) : [];
 };
@@ -148,7 +179,23 @@ export const getPitData = (): PitData[] => {
   return raw ? JSON.parse(raw) : [];
 };
 
-export const savePitData = (data: PitData) => {
+export const savePitData = async (data: PitData) => {
+  try {
+    // Try to save to server first
+    const response = await fetch(`${API_BASE_URL}/pit-data`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (err) {
+    console.warn('Server unavailable, falling back to localStorage');
+  }
+
+  // Fallback to localStorage
   const current = getPitData();
   const pitDataToSave = { ...data, lastModified: data.lastModified || Date.now() };
   
