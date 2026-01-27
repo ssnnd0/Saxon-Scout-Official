@@ -63,7 +63,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 ## Screenshots
 
-| Match Entry | QR Export | Team Analysis |
+| Match Scouting | Pit Scouting | Data Viewer |
 |:-----------:|:---------:|:-------------:|
 | *(Add Screenshot)* | *(Add Screenshot)* | *(Add Screenshot)* |
 
