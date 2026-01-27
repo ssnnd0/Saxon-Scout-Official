@@ -1,6 +1,9 @@
-<link rel="stylesheet" href="README.css">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="/icons/Logo+611+White+Name.webp">
+  <source media="(prefers-color-scheme: light)" srcset="/icons/Logo+611+Black+Name.webp">
+  <img alt="Banner" src="/icons/Logo+611+Black+Name.webp">
+</picture>
 
-![Banner](/icons/Logo+611+Black+Name.webp)
 # Saxon Scout
 ![FRC Season](https://img.shields.io/badge/FRC-2026_REBUILT-yellow?style=for-the-badge)
 ![Team](https://img.shields.io/badge/Team-611_Saxon_Robotics-yellow?style=for-the-badge)
