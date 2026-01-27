@@ -11,7 +11,7 @@
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 
-**Saxon Scout** is the official scouting application developed by **FRC Team 611 (Saxon Robotics)** for the 2026 FIRST Robotics Competition season, **REBUILT℠**.
+**Saxon Scout** is the official scouting application developed by **FRC Team 611 (Saxon Robotics)** and **FRC Team 526 (Saxon Sparks)** for the 2026 FIRST Robotics Competition season, **REBUILT℠**.
 
 This tool is designed to collect, analyze, and visualize data on other robots during competitions, enabling our strategy team to make informed decisions for match play and alliance selection.
 
