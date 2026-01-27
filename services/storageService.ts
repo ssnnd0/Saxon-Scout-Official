@@ -1,4 +1,5 @@
 import { MatchData, AppSettings, RankedTeam, Team, ScheduledMatch, LocalUser, UserPreferences, PitData } from '../types';
+import { analytics } from './analyticsService';
 
 const STORAGE_KEY = 'saxon_scout_data';
 const SCHEDULE_KEY = 'saxon_scout_schedule';
@@ -11,13 +12,25 @@ const PIT_DATA_KEY = 'saxon_pit_data';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Utility to safely parse JSON
+const safeParse = <T>(json: string, fallback: T): T => {
+  try {
+    return JSON.parse(json);
+  } catch (e) {
+    analytics.warn('storage', 'Failed to parse JSON', { json: json.slice(0, 50) });
+    return fallback;
+  }
+};
+
 // API connection helper
 export const connectToSQLServer = async () => {
   try {
     const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`);
-    return response.ok;
+    const isConnected = response.ok;
+    analytics.info('storage', `Server connection: ${isConnected ? 'SUCCESS' : 'FAILED'}`);
+    return isConnected;
   } catch (err) {
-    console.error('Failed to connect to server:', err);
+    analytics.warn('storage', 'Failed to connect to server', { error: String(err) });
     return false;
   }
 };
@@ -32,27 +45,34 @@ export const saveMatch = async (data: MatchData) => {
     });
     
     if (response.ok) {
+      analytics.info('storage', 'Match saved to server', { matchId: data.id });
       return await response.json();
     }
   } catch (err) {
-    console.warn('Server unavailable, falling back to localStorage');
+    analytics.debug('storage', 'Server unavailable, falling back to localStorage', { error: String(err) });
   }
 
   // Fallback to localStorage
-  const current = await getMatches();
-  const matchToSave = { ...data, lastModified: data.lastModified || Date.now() };
-  
-  const existingIndex = current.findIndex(m => m.id === matchToSave.id);
-  let updated;
-  if (existingIndex >= 0) {
-    updated = [...current];
-    updated[existingIndex] = matchToSave;
-  } else {
-    matchToSave.id = matchToSave.id || Date.now().toString();
-    updated = [...current, matchToSave];
+  try {
+    const current = await getMatches();
+    const matchToSave = { ...data, lastModified: data.lastModified || Date.now() };
+    
+    const existingIndex = current.findIndex(m => m.id === matchToSave.id);
+    let updated;
+    if (existingIndex >= 0) {
+      updated = [...current];
+      updated[existingIndex] = matchToSave;
+    } else {
+      matchToSave.id = matchToSave.id || Date.now().toString();
+      updated = [...current, matchToSave];
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    analytics.info('storage', 'Match saved to localStorage', { matchId: matchToSave.id });
+    return matchToSave;
+  } catch (err) {
+    analytics.error('storage', 'Failed to save match', { error: String(err) });
+    throw err;
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  return matchToSave;
 };
 
 export const mergeMatches = async (remoteMatches: MatchData[]) => {
@@ -84,15 +104,24 @@ export const getMatches = async (): Promise<MatchData[]> => {
     // Try to fetch from server first
     const response = await fetch(`${API_BASE_URL}/matches`);
     if (response.ok) {
-      return await response.json();
+      const matches = await response.json();
+      analytics.debug('storage', `Fetched ${matches.length} matches from server`);
+      return matches;
     }
   } catch (err) {
-    console.warn('Server unavailable, using localStorage');
+    analytics.debug('storage', 'Server unavailable, using localStorage', { error: String(err) });
   }
 
   // Fallback to localStorage
-  const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const matches = raw ? safeParse(raw, []) : [];
+    analytics.debug('storage', `Fetched ${matches.length} matches from localStorage`);
+    return matches;
+  } catch (err) {
+    analytics.error('storage', 'Failed to fetch matches', { error: String(err) });
+    return [];
+  }
 };
 
 export const clearMatches = () => {

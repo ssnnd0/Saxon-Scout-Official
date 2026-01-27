@@ -1,27 +1,106 @@
 {
-  "name": "SaxonScout",
+  "name": "SaxonScout - FRC Team 611 Scouting",
   "short_name": "SaxonScout",
+  "description": "Advanced scouting application for FIRST Robotics Competition",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#000000",
   "theme_color": "#A8C66C",
-  "orientation": "portrait",
+  "categories": ["productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/icons/windows11/Square150x150Logo.scale-200.png",
+      "sizes": "300x300",
+      "type": "image/png"
+    }
+  ],
   "icons": [
     {
-      "src": "/icon/",
+      "src": "/icons/android/android-launchericon-48-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/android/android-launchericon-72-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/android/android-launchericon-96-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/android/android-launchericon-144-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/android/android-launchericon-192-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/android/android-launchericon-512-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/ios/192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon/windows-icon.png",
-      "sizes": "512x512",
+      "src": "/icons/ios/180.png",
+      "sizes": "180x180",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "src": "/icons/ios/152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/windows11/Square150x150Logo.scale-200.png",
+      "sizes": "300x300",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/windows11/Square150x150Logo.scale-400.png",
+      "sizes": "600x600",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Match",
+      "short_name": "Match",
+      "description": "Start a new match scouting session",
+      "url": "/match",
+      "icons": [
+        {
+          "src": "/icons/android/android-launchericon-192-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "View Data",
+      "short_name": "Data",
+      "description": "View and export scouted data",
+      "url": "/data",
+      "icons": [
+        {
+          "src": "/icons/android/android-launchericon-192-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

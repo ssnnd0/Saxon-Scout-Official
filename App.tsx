@@ -1,8 +1,14 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Navigation } from './components/Navigation';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Footer } from './components/Footer';
 import { MatchData, ViewState, Alliance, MatchPhase } from './types';
 import { getUserPreferences, saveMatch } from './services/storageService';
 import { syncService } from './services/syncService';
+import { useInstallPrompt } from './hooks/useInstallPrompt';
+import { Download } from 'lucide-react';
+import { ToastProvider } from './contexts/ToastContext';
+import { analytics } from './services/analyticsService';
 
 // Lazy Load Views
 const Login = lazy(() => import('./views/Login').then(module => ({ default: module.Login })));
@@ -66,6 +72,8 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('LOGIN');
   const [matchData, setMatchData] = useState<MatchData>(initialMatchData);
   const [user, setUser] = useState<string | null>(localStorage.getItem('saxon_user'));
+  const { isInstallable, promptInstall } = useInstallPrompt();
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   // Init Theme Effect
   useEffect(() => {
@@ -83,7 +91,25 @@ const App: React.FC = () => {
     
     // Initialize sync service globally
     syncService.init();
-  }, []);
+
+    // Disable right-click context menu
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      return false;
+    };
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    // Show PWA install prompt after 5 seconds on mobile
+    if (isInstallable && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      const timer = setTimeout(() => setShowInstallPrompt(true), 5000);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('contextmenu', handleContextMenu);
+      };
+    }
+
+    return () => document.removeEventListener('contextmenu', handleContextMenu);
+  }, [isInstallable]);
 
   useEffect(() => {
     if (user) {
@@ -115,6 +141,7 @@ const App: React.FC = () => {
   const handleLogin = (username: string) => {
       localStorage.setItem('saxon_user', username);
       setUser(username);
+      analytics.trackEvent('user_login', { username });
       
       // Try to pre-fill initials
       const prefs = getUserPreferences();
@@ -128,6 +155,7 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+      analytics.trackEvent('user_logout', { username: user });
       localStorage.removeItem('saxon_user');
       setUser(null);
       setView('LOGIN');
@@ -188,7 +216,41 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden font-sans selection:bg-matcha selection:text-obsidian flex flex-row text-slate-900 dark:text-white bg-slate-50 dark:bg-obsidian">
+    <ErrorBoundary>
+      <ToastProvider>
+        <div className="h-screen w-screen overflow-hidden font-sans selection:bg-matcha selection:text-obsidian flex flex-row text-slate-900 dark:text-white bg-slate-50 dark:bg-obsidian">
+       {/* PWA Install Prompt Modal */}
+       {showInstallPrompt && isInstallable && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+           <div className="bg-white dark:bg-obsidian-light rounded-2xl p-6 mx-4 max-w-sm shadow-2xl animate-fade-in">
+             <div className="flex items-center gap-3 mb-4">
+               <Download className="text-matcha" size={32} />
+               <h2 className="text-2xl font-bold">Install App</h2>
+             </div>
+             <p className="text-slate-600 dark:text-slate-400 mb-6">
+               Install SaxonScout for instant access and offline support. No need to open your browser every time!
+             </p>
+             <div className="flex gap-3">
+               <button
+                 onClick={() => setShowInstallPrompt(false)}
+                 className="flex-1 px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold transition-colors"
+               >
+                 Later
+               </button>
+               <button
+                 onClick={async () => {
+                   await promptInstall();
+                   setShowInstallPrompt(false);
+                 }}
+                 className="flex-1 px-4 py-3 bg-matcha text-obsidian rounded-lg font-semibold hover:bg-matcha-dark transition-colors"
+               >
+                 Install
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+
        {/* Desktop Sidebar (Medium Screens and up) */}
        {view !== 'LOGIN' && (
          <aside className="hidden md:block w-64 h-full flex-none border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-obsidian-light z-20 relative">
@@ -204,9 +266,16 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full h-full relative flex flex-col overflow-hidden bg-slate-50/90 dark:bg-obsidian/90 backdrop-blur-sm transition-all">
-        <Suspense fallback={<LoadingSpinner />}>
-            {renderView()}
-        </Suspense>
+        <div className="flex-1 overflow-auto">
+          <Suspense fallback={<LoadingSpinner />}>
+              {renderView()}
+          </Suspense>
+        </div>
+        
+        {/* Footer (always visible except on login) */}
+        {view !== 'LOGIN' && (
+          <Footer variant="compact" />
+        )}
         
         {/* Mobile Navigation FAB (Small Screens only) */}
         {view !== 'LOGIN' && (
@@ -222,6 +291,8 @@ const App: React.FC = () => {
         )}
       </main>
     </div>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 };
 

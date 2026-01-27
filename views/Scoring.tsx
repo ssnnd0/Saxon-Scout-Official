@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { MatchData, ViewState, MatchPhase, GamePiece, ScoutingEvent } from '../types';
 import { KEYBINDS } from '../constants';
 import { Target, ArrowDown, Package, Play, FastForward, Undo2, ArrowRight } from 'lucide-react';
+import { useLongPress } from '../hooks/useLongPress';
 
 interface ScoringProps {
   phase: MatchPhase;
@@ -13,6 +14,7 @@ interface ScoringProps {
 export const Scoring: React.FC<ScoringProps> = ({ phase, matchData, setMatchData, setView }) => {
   const [lastAction, setLastAction] = useState<string>('');
   const [timerWarning, setTimerWarning] = useState(false);
+  const [isHoldingScore, setIsHoldingScore] = useState(false);
 
   const isAuto = phase === MatchPhase.Auto;
 
@@ -58,7 +60,7 @@ export const Scoring: React.FC<ScoringProps> = ({ phase, matchData, setMatchData
         if (action === 'Score') {
             isAutoPhase ? newData.autoFuelScored++ : newData.teleopFuelScored++;
         } else if (action === 'Miss') {
-            isAutoPhase ? newData.autoFuelMissed++ : newData.teleopFuelMissed++;
+            isAutoPhase ? newData.autoFuelMissed-- : newData.teleopFuelMissed--;
         } else if (action === 'Pickup') {
             if (location === 'Ground') newData.fuelIntakeGround++;
             else newData.fuelIntakeSource++;
@@ -74,6 +76,23 @@ export const Scoring: React.FC<ScoringProps> = ({ phase, matchData, setMatchData
       return newData;
     });
   }, [phase, setMatchData]);
+
+  // Press and hold score button
+  const scoreButtonLongPress = useLongPress(
+    () => addEvent('Score', GamePiece.Fuel, 'Hub'),
+    {
+      delay: 300,
+      holdInterval: 100,
+      onStart: () => {
+        setIsHoldingScore(true);
+        if (navigator.vibrate) navigator.vibrate([10, 50, 10]);
+      },
+      onEnd: () => setIsHoldingScore(false),
+      onHold: () => {
+        if (navigator.vibrate) navigator.vibrate(5);
+      }
+    }
+  );
 
   const handleUndo = useCallback(() => {
       setMatchData(prev => {
@@ -94,7 +113,7 @@ export const Scoring: React.FC<ScoringProps> = ({ phase, matchData, setMatchData
                     if (lastEvent.action === 'Score') {
                         isAutoPhase ? newData.autoFuelScored-- : newData.teleopFuelScored--;
                     } else if (lastEvent.action === 'Miss') {
-                        isAutoPhase ? newData.autoFuelMissed-- : newData.teleopFuelMissed--;
+                        isAutoPhase ? newData.autoFuelMissed++ : newData.teleopFuelMissed++;
                     } else if (lastEvent.action === 'Pickup') {
                         if (lastEvent.location === 'Ground') newData.fuelIntakeGround--;
                         else newData.fuelIntakeSource--;
@@ -193,12 +212,15 @@ export const Scoring: React.FC<ScoringProps> = ({ phase, matchData, setMatchData
           {/* Right Column: SCORE (Massive) */}
           <button 
               onClick={() => addEvent('Score', GamePiece.Fuel, 'Hub')}
-              className="bg-matcha rounded-xl flex flex-col items-center justify-center active:scale-[0.98] transition-transform relative overflow-hidden group shadow-[0_0_30px_rgba(168,198,108,0.15)]"
+              {...scoreButtonLongPress}
+              className={`bg-matcha rounded-xl flex flex-col items-center justify-center active:scale-[0.98] transition-all relative overflow-hidden group shadow-[0_0_30px_rgba(168,198,108,0.15)] ${isHoldingScore ? 'scale-95 shadow-[0_0_50px_rgba(168,198,108,0.4)]' : ''}`}
           >
                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                <Target size={64} className="text-obsidian mb-4 opacity-80" />
                <span className="text-7xl font-black text-obsidian leading-none">{scoreHubCount}</span>
-               <span className="text-sm font-black text-obsidian uppercase tracking-widest mt-2 bg-black/10 px-4 py-1 rounded-full">SCORE</span>
+               <span className="text-sm font-black text-obsidian uppercase tracking-widest mt-2 bg-black/10 px-4 py-1 rounded-full">
+                 {isHoldingScore ? 'HOLD' : 'SCORE'}
+               </span>
           </button>
       </div>
     </div>

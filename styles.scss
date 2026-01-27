@@ -2,9 +2,29 @@ $color-matcha: #A8C66C;
 $color-black: #000000;
 $color-gold: #D4AF37;
 
+* {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-scalable: no;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  position: fixed;
+  overflow: hidden;
+}
+
 body {
   background-color: $color-black;
   background-image: radial-gradient(circle at 50% 0%, #1a2e1a 0%, $color-black 70%);
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
@@ -28,6 +48,36 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: $color-gold; 
+}
+
+// Mobile Optimizations
+input, textarea, select, button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255));
+  background-color: transparent;
+  font-size: 16px;
+  font-family: inherit;
+}
+
+input:disabled, button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+// Prevent elastic scroll on iOS
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+// Prevent double-tap zoom on inputs
+input, button, textarea, select {
+  touch-action: manipulation;
 }
 
 // Utility to force hardware acceleration on animated elements
@@ -55,4 +105,49 @@ body {
   background: linear-gradient(to right, $color-gold, lighten($color-gold, 20%));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+// Animation for PWA prompt
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;}
+
+// Toast slide up animation
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+// Pulse animation for sync status
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

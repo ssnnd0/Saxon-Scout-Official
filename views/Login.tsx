@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { Logo } from '../components/Logo';
 import { AUTHORIZED_USERS } from '../env-login';
 import { getLocalUsers } from '../services/storageService';
 
@@ -56,9 +57,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
 
         <div className="text-center space-y-2 mb-8 relative">
-          <h1 className="text-5xl font-black text-white tracking-tighter drop-shadow-xl">
-            SAXON<span className="text-matcha">SCOUT</span>
-          </h1>
+          <Logo variant="text" size="LG" />
           <p className="text-gold tracking-[0.2em] text-xs font-bold uppercase">Langley Saxons 611</p>
         </div>
 
