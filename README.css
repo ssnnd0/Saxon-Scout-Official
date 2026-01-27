@@ -1,6 +1,0 @@
-@media (prefers-color-scheme: dark) {
-  img[alt="Banner"] {
-    filter: invert(100%);
-    /* filter: invert(100%) hue-rotate(180deg); */
-  }
-}
