@@ -1,5 +1,7 @@
-# Saxon Scout
+<link rel="stylesheet" href="README.css">
 
+![Banner](/icons/Logo+611+Black+Name.webp)
+# Saxon Scout
 ![FRC Season](https://img.shields.io/badge/FRC-2026_REBUILT-yellow?style=for-the-badge)
 ![Team](https://img.shields.io/badge/Team-611_Saxon_Robotics-yellow?style=for-the-badge)
 ![Team](https://img.shields.io/badge/Team-526_Saxon_Sparks-black?style=for-the-badge)
